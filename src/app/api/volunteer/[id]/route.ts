@@ -1,35 +1,54 @@
-// app/api/careers/[id]/route.ts
-import { NextResponse, NextRequest } from "next/server";
-import { getApiUrl } from "@/lib/getApiUrl";
+import { NextResponse } from "next/server";
+import { db } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ id: string }> } // <-- params is a Promise
+  _req: Request,
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await ctx.params; // <-- await it
-    const base = getApiUrl().replace(/\/$/, "");
+    const { id } = await ctx.params;
 
-    // Use your Express path-style detail route
-    const target = `${base}/api/get-career/${encodeURIComponent(id)}`;
+    if (!id) {
+      return NextResponse.json(
+        { error: "Career ID is required" },
+        { status: 400 }
+      );
+    }
 
-    const upstream = await fetch(target, {
-      method: "GET",
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    });
+    const doc = await db
+      .collection("careers")
+      .doc(id)
+      .get();
 
-    const contentType = upstream.headers.get("content-type") ?? "application/json";
-    const text = await upstream.text();
+    if (!doc.exists) {
+      return NextResponse.json(
+        { error: "Career not found" },
+        { status: 404 }
+      );
+    }
 
-    return new NextResponse(text, {
-      status: upstream.status,
-      headers: { "Content-Type": contentType },
-    });
-  } catch (err) {
-    console.error("Career item proxy error:", err);
-    return NextResponse.json({ error: "Upstream request failed" }, { status: 502 });
+    return NextResponse.json(
+      {
+        career: {
+          id: doc.id,
+          ...doc.data(),
+        },
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error getting volunteer opportunity:", error);
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

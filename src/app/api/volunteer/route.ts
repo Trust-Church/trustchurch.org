@@ -1,32 +1,32 @@
 import { NextResponse } from "next/server";
-import { getApiUrl } from "@/lib/getApiUrl";
+import { db } from "@/lib/firebase-admin";
 
-export const dynamic = "force-dynamic"; // ensure no static caching in dev
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const base = getApiUrl().replace(/\/$/, "");
-    const target = `${base}/api/get-careers`;
+    const snapshot = await db.collection("careers").get();
 
-    const upstream = await fetch(target, {
-      method: "GET",
-      // Avoid any caching layers between Next and your backend
-      cache: "no-store",
-      headers: {
-        // Pass through anything useful if you like (optional)
-        "Accept": "application/json",
-      },
-    });
+    const careers = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-    const contentType = upstream.headers.get("content-type") ?? "application/json";
-    const text = await upstream.text();
+    return NextResponse.json(
+      { careers },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error getting volunteer opportunities:", error);
 
-    return new NextResponse(text, {
-      status: upstream.status,
-      headers: { "Content-Type": contentType },
-    });
-  } catch (err) {
-    console.error("Count proxy error:", err);
-    return NextResponse.json({ error: "Upstream request failed" }, { status: 502 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
