@@ -33,12 +33,15 @@ COPY . .
 # They are available only during this RUN instruction and are NOT copied
 # into the resulting image.
 RUN --mount=type=cache,target=/root/.npm \
-    --mount=type=secret,id=FIREBASE_PROJECT_ID,env=FIREBASE_PROJECT_ID \
-    --mount=type=secret,id=FIREBASE_PRIVATE_KEY,env=FIREBASE_PRIVATE_KEY \
-    --mount=type=secret,id=FIREBASE_CLIENT_EMAIL,env=FIREBASE_CLIENT_EMAIL \
-    --mount=type=secret,id=FIREBASE_STORAGE_BUCKET,env=FIREBASE_STORAGE_BUCKET \
+    --mount=type=secret,id=FIREBASE_PROJECT_ID \
+    --mount=type=secret,id=FIREBASE_PRIVATE_KEY \
+    --mount=type=secret,id=FIREBASE_CLIENT_EMAIL \
+    --mount=type=secret,id=FIREBASE_STORAGE_BUCKET \
+    export FIREBASE_PROJECT_ID="$(cat /run/secrets/FIREBASE_PROJECT_ID)" && \
+    export FIREBASE_PRIVATE_KEY="$(cat /run/secrets/FIREBASE_PRIVATE_KEY)" && \
+    export FIREBASE_CLIENT_EMAIL="$(cat /run/secrets/FIREBASE_CLIENT_EMAIL)" && \
+    export FIREBASE_STORAGE_BUCKET="$(cat /run/secrets/FIREBASE_STORAGE_BUCKET)" && \
     npm run build
-
 
 # 3) Install PRODUCTION-ONLY dependencies in a clean layer
 FROM node:20-bookworm-slim AS prod-deps
