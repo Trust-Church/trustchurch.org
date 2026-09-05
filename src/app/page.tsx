@@ -48,7 +48,7 @@ export default function Home() {
   const fetchCount = useCallback(async () => {
     try {
       setLoadingCount(true);
-      const res = await fetch(`/api/subscribe/count`, { method: "GET" });
+      const res = await fetch(`/api/subscribers/count`, { method: "GET" });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`Count failed (HTTP ${res.status}) – ${text}`);
@@ -101,7 +101,7 @@ export default function Home() {
     setStatus("loading");
 
     try {
-      const res = await fetch("/api/subscribe", {
+      const res = await fetch("/api/subscribers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
