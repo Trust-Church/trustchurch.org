@@ -1,6 +1,6 @@
 {
-  "name": "landing-page",
-  "version": "0.1.0",
+  "name": "trust-church",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
