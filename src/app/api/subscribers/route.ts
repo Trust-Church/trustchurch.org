@@ -3,6 +3,9 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase-admin";
 import { sendWelcomeEmail } from "@/lib/mail/postmark";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
