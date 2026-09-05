@@ -5,7 +5,7 @@
 ##############################################
 
 # 1) Install ALL dependencies for building
-FROM node:20-bookworm-slim AS deps-dev
+FROM node:22-bookworm-slim AS deps-dev
 
 WORKDIR /app
 ENV NODE_ENV=development
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 2) Build the application
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 3) Install production-only dependencies
-FROM node:20-bookworm-slim AS prod-deps
+FROM node:22-bookworm-slim AS prod-deps
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 4) Runtime image
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
