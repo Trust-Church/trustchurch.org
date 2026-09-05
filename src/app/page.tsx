@@ -101,7 +101,7 @@ export default function Home() {
     setStatus("loading");
 
     try {
-      const res = await fetch("/api/subscribe", {
+      const res = await fetch("/api/subscribers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
