@@ -4,28 +4,40 @@ import { ServerClient } from "postmark";
 
 let client: ServerClient | null = null;
 
-function getClient(): ServerClient {
-  const token = process.env.POSTMARK_TOKEN;
+function getPostmarkToken(): string {
+  const token = process.env.POSTMARK_TOKEN?.trim();
 
   if (!token) {
     throw new Error(
-      "Missing POSTMARK_TOKEN. Set it in your environment before sending email."
+      "Missing POSTMARK_TOKEN. Set the Postmark Server API Token in your environment."
     );
   }
 
+  return token;
+}
+
+function getClient(): ServerClient {
   if (!client) {
-    client = new ServerClient(token);
+    client = new ServerClient(getPostmarkToken());
+
+    console.log("[Postmark] ServerClient initialized.", {
+      tokenConfigured: true,
+      tokenLength: getPostmarkToken().length,
+    });
   }
 
   return client;
 }
 
+/**
+ * Get the verified sender address.
+ */
 function getFromEmail(): string {
-  const from = process.env.FROM_EMAIL;
+  const from = process.env.FROM_EMAIL?.trim();
 
   if (!from) {
     throw new Error(
-      "Missing FROM_EMAIL. Set it in your environment before sending email."
+      "Missing FROM_EMAIL. Set it to a verified sender address in Postmark."
     );
   }
 
@@ -33,50 +45,219 @@ function getFromEmail(): string {
 }
 
 function getMessageStream(): string {
-  return process.env.POSTMARK_MESSAGE_STREAM || "outbound";
+  return process.env.POSTMARK_MESSAGE_STREAM?.trim() || "outbound";
 }
+
+/**
+ * Normalize an email address.
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Basic email format validation.
+ *
+ * This is intentionally not a complete RFC implementation.
+ * It catches obviously malformed addresses before sending.
+ */
+export function isValidEmailFormat(email: string): boolean {
+  if (!email || email.length > 254) {
+    return false;
+  }
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Validate and normalize an email address.
+ */
+export function validateRecipientEmail(email: string): string {
+  if (typeof email !== "string") {
+    throw new Error("Email address must be a string.");
+  }
+
+  const normalized = normalizeEmail(email);
+
+  if (!isValidEmailFormat(normalized)) {
+    throw new Error(`Invalid email address: ${normalized}`);
+  }
+
+  return normalized;
+}
+
+export class InactiveRecipientError extends Error {
+  public readonly code = 406;
+  public readonly email: string;
+
+  constructor(email: string, message?: string) {
+    super(
+      message ||
+        `Postmark has marked ${email} as an inactive recipient. Email was not sent.`
+    );
+
+    this.name = "InactiveRecipientError";
+    this.email = email;
+  }
+}
+
+function getPostmarkErrorDetails(error: unknown): {
+  errorCode?: number;
+  message: string;
+} {
+  if (error instanceof Error) {
+    const postmarkError = error as Error & {
+      ErrorCode?: number;
+      Message?: string;
+      code?: number | string;
+    };
+
+    const errorCode =
+      typeof postmarkError.ErrorCode === "number"
+        ? postmarkError.ErrorCode
+        : typeof postmarkError.code === "number"
+          ? postmarkError.code
+          : undefined;
+
+    const message =
+      postmarkError.Message ||
+      postmarkError.message ||
+      "Unknown Postmark error";
+
+    return {
+      errorCode,
+      message,
+    };
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const postmarkError = error as {
+      ErrorCode?: number;
+      Message?: string;
+      message?: string;
+      code?: number;
+    };
+
+    const errorCode =
+      typeof postmarkError.ErrorCode === "number"
+        ? postmarkError.ErrorCode
+        : typeof postmarkError.code === "number"
+          ? postmarkError.code
+          : undefined;
+
+    return {
+      errorCode,
+      message:
+        postmarkError.Message ||
+        postmarkError.message ||
+        "Unknown Postmark error",
+    };
+  }
+
+  return {
+    message: String(error || "Unknown Postmark error"),
+  };
+}
+
+
+function handlePostmarkError(
+  error: unknown,
+  recipient: string
+): never {
+  const { errorCode, message } = getPostmarkErrorDetails(error);
+
+  if (errorCode === 406) {
+    throw new InactiveRecipientError(recipient, message);
+  }
+
+  throw new Error(
+    `Postmark failed to send email to ${recipient}. ` +
+      `ErrorCode: ${errorCode ?? "unknown"}. ` +
+      `Message: ${message}`
+  );
+}
+
+function assertPostmarkSuccess(
+  result: {
+    ErrorCode?: number;
+    MessageID?: string;
+    SubmittedAt?: string;
+    Message?: string;
+  },
+  recipient: string
+) {
+  if (result.ErrorCode !== 0) {
+    if (result.ErrorCode === 406) {
+      throw new InactiveRecipientError(
+        recipient,
+        result.Message ||
+          `Postmark marked ${recipient} as an inactive recipient.`
+      );
+    }
+
+    throw new Error(
+      `Postmark rejected the email to ${recipient}. ` +
+        `ErrorCode: ${result.ErrorCode ?? "unknown"}. ` +
+        `Message: ${result.Message || "Unknown Postmark response"}`
+    );
+  }
+
+  if (!result.MessageID) {
+    throw new Error(
+      `Postmark returned success for ${recipient}, but no MessageID was returned.`
+    );
+  }
+
+  return result;
+}
+
+
 
 /**
  * Send the welcome email to a new subscriber.
  */
 export async function sendWelcomeEmail(to: string) {
-  return getClient().sendEmail({
-    From: getFromEmail(),
-    To: to,
-    Subject: "Welcome to Trust Church!",
-    HtmlBody: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
-        <h1 style="color:#2c3e50;">Welcome to Trust Church!</h1>
+  const recipient = validateRecipientEmail(to);
 
-        <p>We’re so glad you’re here.</p>
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: "Welcome to Trust Church!",
 
-        <p>
-          This is more than just a community—it’s a family rooted in God,
-          strengthened by faith, and dedicated to good works and goodwill
-          toward all. Here, you’ll find encouragement, purpose, and a place
-          to grow alongside others who share the same heart for service
-          and connection.
-        </p>
+      HtmlBody: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
+          <h1 style="color:#2c3e50;">Welcome to Trust Church!</h1>
 
-        <p>
-          Our mission is simple: to walk in love, build each other up, and
-          shine light into the world through faith and action. Together,
-          we can make a difference.
-        </p>
+          <p>We’re so glad you’re here.</p>
 
-        <p>
-          Thank you for joining us on this journey. We can’t wait to walk
-          alongside you in faith and fellowship.
-        </p>
+          <p>
+            This is more than just a community—it’s a family rooted in God,
+            strengthened by faith, and dedicated to good works and goodwill
+            toward all. Here, you’ll find encouragement, purpose, and a place
+            to grow alongside others who share the same heart for service
+            and connection.
+          </p>
 
-        <p style="margin-top: 2em;">
-          With gratitude and hope,<br />
-          Trust Church
-        </p>
-      </div>
-    `,
+          <p>
+            Our mission is simple: to walk in love, build each other up, and
+            shine light into the world through faith and action. Together,
+            we can make a difference.
+          </p>
 
-    TextBody: `
+          <p>
+            Thank you for joining us on this journey. We can’t wait to walk
+            alongside you in faith and fellowship.
+          </p>
+
+          <p style="margin-top: 2em;">
+            With gratitude and hope,<br />
+            Trust Church
+          </p>
+        </div>
+      `,
+
+      TextBody: `
 Welcome to Trust Church!
 
 We’re so glad you’re here.
@@ -89,10 +270,30 @@ Thank you for joining us on this journey. We can’t wait to walk alongside you 
 
 With gratitude and hope,
 Trust Church
-    `,
+      `,
 
-    MessageStream: getMessageStream(),
-  });
+      MessageStream: getMessageStream(),
+    });
+
+    const accepted = assertPostmarkSuccess(result, recipient);
+    return accepted;
+  } catch (error) {
+    if (error instanceof InactiveRecipientError) {
+      console.warn("[Postmark] Inactive recipient:", {
+        to: recipient,
+        message: error.message,
+      });
+
+      throw error;
+    }
+
+    console.error("[Postmark] Welcome email failed:", {
+      to: recipient,
+      error,
+    });
+
+    handlePostmarkError(error, recipient);
+  }
 }
 
 /**
@@ -109,6 +310,10 @@ export async function sendVolunteerApplicationReceipt({
   jobTitle?: string | null;
   jobId?: string;
 }) {
+  const recipient = validateRecipientEmail(to);
+
+  const safeFirstName = escapeHtml(firstName);
+
   const opportunityText = jobTitle
     ? `for the <strong>${escapeHtml(jobTitle)}</strong> opportunity`
     : "for a volunteer opportunity";
@@ -117,48 +322,50 @@ export async function sendVolunteerApplicationReceipt({
     ? `for the "${jobTitle}" opportunity`
     : "for a volunteer opportunity";
 
-  return getClient().sendEmail({
-    From: getFromEmail(),
-    To: to,
-    Subject: "Thank you for volunteering with Trust Church!",
-    HtmlBody: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h1 style="color:#2c3e50;">
-          Thank You, ${escapeHtml(firstName)}!
-        </h1>
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: "Thank you for volunteering with Trust Church!",
 
-        <p>
-          We have received your volunteer application ${opportunityText}.
-        </p>
+      HtmlBody: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h1 style="color:#2c3e50;">
+            Thank You, ${safeFirstName}!
+          </h1>
 
-        <p>
-          Thank you for your willingness to serve and be part of what God
-          is doing through Trust Church.
-        </p>
+          <p>
+            We have received your volunteer application ${opportunityText}.
+          </p>
 
-        <p>
-          Our team will review your application and reach out if we need
-          any additional information or would like to discuss next steps.
-        </p>
+          <p>
+            Thank you for your willingness to serve and be part of what God
+            is doing through Trust Church.
+          </p>
 
-        ${
-          jobId
-            ? `
-        <p style="color:#666; font-size:13px;">
-          Application opportunity ID: ${escapeHtml(jobId)}
-        </p>
-        `
-            : ""
-        }
+          <p>
+            Our team will review your application and reach out if we need
+            any additional information or would like to discuss next steps.
+          </p>
 
-        <p style="margin-top: 2em;">
-          With gratitude,<br />
-          Trust Church
-        </p>
-      </div>
-    `,
+          ${
+            jobId
+              ? `
+          <p style="color:#666; font-size:13px;">
+            Application opportunity ID: ${escapeHtml(jobId)}
+          </p>
+          `
+              : ""
+          }
 
-    TextBody: `
+          <p style="margin-top: 2em;">
+            With gratitude,<br />
+            Trust Church
+          </p>
+        </div>
+      `,
+
+      TextBody: `
 Thank You, ${firstName}!
 
 We have received your volunteer application ${opportunityTextPlain}.
@@ -175,10 +382,32 @@ ${
 
 With gratitude,
 Trust Church
-    `,
+      `,
 
-    MessageStream: getMessageStream(),
-  });
+      MessageStream: getMessageStream(),
+    });
+
+    const accepted = assertPostmarkSuccess(result, recipient);
+
+
+    return accepted;
+  } catch (error) {
+    if (error instanceof InactiveRecipientError) {
+      console.warn("[Postmark] Inactive volunteer recipient:", {
+        to: recipient,
+        message: error.message,
+      });
+
+      throw error;
+    }
+
+    console.error("[Postmark] Volunteer receipt failed:", {
+      to: recipient,
+      error,
+    });
+
+    handlePostmarkError(error, recipient);
+  }
 }
 
 /**
@@ -212,6 +441,8 @@ export async function notifyAdminOfVolunteer({
     );
   }
 
+  const recipient = validateRecipientEmail(adminEmail);
+
   const fullName = [
     applicant.firstName,
     applicant.middleName,
@@ -244,80 +475,81 @@ export async function notifyAdminOfVolunteer({
           .join("\n")
       : "None provided";
 
-  return getClient().sendEmail({
-    From: getFromEmail(),
-    To: adminEmail,
-    Subject: `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`,
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`,
 
-    HtmlBody: `
-      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h1 style="color:#2c3e50;">
-          New Volunteer Application
-        </h1>
+      HtmlBody: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h1 style="color:#2c3e50;">
+            New Volunteer Application
+          </h1>
 
-        <p>
-          A new volunteer application has been submitted through
-          the Trust Church website.
-        </p>
+          <p>
+            A new volunteer application has been submitted through
+            the Trust Church website.
+          </p>
 
-        <hr />
+          <hr />
 
-        <h2>Applicant</h2>
+          <h2>Applicant</h2>
 
-        <p>
-          <strong>Name:</strong> ${escapeHtml(fullName)}<br />
-          <strong>Email:</strong>
-          <a href="mailto:${escapeHtml(applicant.email)}">
-            ${escapeHtml(applicant.email)}
-          </a><br />
-          <strong>Phone:</strong> ${escapeHtml(applicant.phone)}
-        </p>
+          <p>
+            <strong>Name:</strong> ${escapeHtml(fullName)}<br />
+            <strong>Email:</strong>
+            <a href="mailto:${escapeHtml(applicant.email)}">
+              ${escapeHtml(applicant.email)}
+            </a><br />
+            <strong>Phone:</strong> ${escapeHtml(applicant.phone)}
+          </p>
 
-        <h2>Opportunity</h2>
+          <h2>Opportunity</h2>
 
-        <p>
-          <strong>Position:</strong>
-          ${jobTitle ? escapeHtml(jobTitle) : "Not specified"}<br />
-          <strong>Job ID:</strong>
-          ${jobId ? escapeHtml(jobId) : "Not specified"}
-        </p>
+          <p>
+            <strong>Position:</strong>
+            ${jobTitle ? escapeHtml(jobTitle) : "Not specified"}<br />
+            <strong>Job ID:</strong>
+            ${jobId ? escapeHtml(jobId) : "Not specified"}
+          </p>
 
-        ${socialsHtml}
+          ${socialsHtml}
 
-        ${
-          applicant.resumeUrl
-            ? `
-        <h3>Resume</h3>
-        <p>
-          <a href="${escapeHtml(applicant.resumeUrl)}">
-            Download/View Resume
-          </a>
-        </p>
-        `
-            : `
-        <p>
-          <strong>Resume:</strong> No resume uploaded
-        </p>
-        `
-        }
-
-        <hr />
-
-        <p style="font-size:13px; color:#777;">
-          Volunteer application ID: ${escapeHtml(applicant.id)}<br />
-          Submitted:
           ${
-            applicant.createdAt
-              ? escapeHtml(
-                  new Date(applicant.createdAt).toLocaleString()
-                )
-              : "Unknown"
+            applicant.resumeUrl
+              ? `
+          <h3>Resume</h3>
+          <p>
+            <a href="${escapeHtml(applicant.resumeUrl)}">
+              Download/View Resume
+            </a>
+          </p>
+          `
+              : `
+          <p>
+            <strong>Resume:</strong> No resume uploaded
+          </p>
+          `
           }
-        </p>
-      </div>
-    `,
 
-    TextBody: `
+          <hr />
+
+          <p style="font-size:13px; color:#777;">
+            Volunteer application ID: ${escapeHtml(applicant.id)}<br />
+            Submitted:
+            ${
+              applicant.createdAt
+                ? escapeHtml(
+                    new Date(applicant.createdAt).toLocaleString()
+                  )
+                : "Unknown"
+            }
+          </p>
+        </div>
+      `,
+
+      TextBody: `
 New Volunteer Application
 
 A new volunteer application has been submitted through the Trust Church website.
@@ -346,10 +578,32 @@ ${applicant.id}
 
 SUBMITTED
 ${applicant.createdAt || "Unknown"}
-    `,
+      `,
 
-    MessageStream: getMessageStream(),
-  });
+      MessageStream: getMessageStream(),
+    });
+
+    const accepted = assertPostmarkSuccess(result, recipient);
+
+
+    return accepted;
+  } catch (error) {
+    if (error instanceof InactiveRecipientError) {
+      console.warn("[Postmark] Inactive admin recipient:", {
+        to: recipient,
+        message: error.message,
+      });
+
+      throw error;
+    }
+
+    console.error("[Postmark] Volunteer admin notification failed:", {
+      to: recipient,
+      error,
+    });
+
+    handlePostmarkError(error, recipient);
+  }
 }
 
 /**
