@@ -1,0 +1,80 @@
+.wrapper {
+  width: 100%;
+}
+
+.form {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  margin-bottom: 10px;
+  color: #6c7067;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.control {
+  display: flex;
+  width: 100%;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #aaa99f;
+}
+
+.control input {
+  min-width: 0;
+  flex: 1;
+  padding: 14px 16px 14px 0;
+  border: 0;
+  outline: none;
+  color: #1b1d19;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+}
+
+.control input::placeholder {
+  color: #92958d;
+}
+
+.control button {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 4px 0 20px;
+  border: 0;
+  color: #1b1d19;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.control button:hover {
+  opacity: 0.65;
+}
+
+.control button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.message {
+  margin: 16px 0 0;
+  color: #536043;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.error {
+  color: #8a3b32;
+}
+
+.note {
+  margin: 14px 0 0;
+  color: #8a8c85;
+  font-size: 12px;
+}

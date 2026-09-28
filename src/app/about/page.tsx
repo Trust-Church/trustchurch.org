@@ -1,58 +1,155 @@
-import Image from "next/image";
 import Link from "next/link";
-import Footer from "@/components/Footer";
+
+import Socials from "@/components/Socials";
+
+import styles from "./about.module.css";
+
+export const metadata = {
+  title: "About",
+  description:
+    "Learn about the mission and vision behind Trust Church.",
+};
 
 export default function AboutPage() {
   return (
-    <div className="font-sans grid grid-rows-[auto_1fr_auto] items-start justify-items-center min-h-screen px-6 pt-8 pb-16 gap-y-8 sm:px-12 sm:pt-12">
-      <main className="flex flex-col items-center justify-start py-6 px-4">
-        {/* Logo just above the content */}
-        <Image
-          src="/logo.png"
-          alt="Homepage logo"
-          width={150}
-          height={150}
-          priority
-          className="mb-6"
-        />
+    <main className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.container}>
+          <p className={styles.eyebrow}>About Trust Church</p>
 
-        <h1 className="text-3xl font-bold mb-6">About Us</h1>
+          <h1>
+            Faith should
+            <br />
+            <span>move us.</span>
+          </h1>
 
-        <div className="max-w-2xl text-justify text-lg text-gray-700 space-y-6">
-          <p>
-            At <span className="font-semibold">Trust Church</span>, we believe <span className="font-semibold">God</span> has
-            called His people to something greater than Sunday services. We are
-            here to awaken hearts, unite the Church, and step boldly into the
-            mission of <span className="font-semibold">Christ</span> — bringing hope, healing, and transformation to a
-            broken world.
-          </p>
-
-          <p>
-            Our vision is simple, yet profound:{" "}
-            <span className="italic">to love <span className="font-semibold">God</span> deeply and to love people practically.</span>{" "}
-            That means moving beyond the walls of the church and into the
-            streets, schools, and neighborhoods — wherever there is a need.
-          </p>
-
-          <p>
-            We are not content with watching the world struggle in darkness. We
-            believe the Church is <span className="font-semibold">God’s</span> answer. By donating time, resources, and
-            love, we are committed to solving real problems, restoring dignity,
-            and showing that faith is not passive — it’s alive, active, and
-            world-changing.
-          </p>
-
-          <p>
-            Trust Church exists to call people into this bigger mission: a life
-            surrendered to <span className="font-semibold">Christ</span>, united in His body, and empowered by His
-            Spirit to make a lasting difference. Together, we will shine His
-            light, lift the broken, and bring glory to <span className="font-semibold">God</span> through good deeds
-            and worship.
+          <p className={styles.heroCopy}>
+            We believe God has called His people to something greater than
+            Sunday services.
           </p>
         </div>
-      </main>
+      </section>
 
-      <Footer />
-    </div>
+      <section className={styles.introduction}>
+        <div className={styles.container}>
+          <div className={styles.twoColumn}>
+            <p className={styles.sectionLabel}>Why we exist</p>
+
+            <div className={styles.largeCopy}>
+              <p>
+                Trust Church exists to awaken hearts, unite the Church, and
+                step boldly into the mission of Christ — bringing hope,
+                healing, and transformation to a broken world.
+              </p>
+
+              <p>
+                Our vision is simple, yet profound:
+                <strong>
+                  {" "}
+                  to love God deeply and to love people practically.
+                </strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.mission}>
+        <div className={styles.container}>
+          <div className={styles.missionGrid}>
+            <div className={styles.missionHeading}>
+              <p className={styles.sectionLabel}>Our mission</p>
+
+              <h2>Beyond the walls.</h2>
+            </div>
+
+            <div className={styles.missionCopy}>
+              <p>
+                Loving people practically means moving beyond the walls of the
+                church and into the streets, schools, neighborhoods, and
+                communities — wherever there is a need.
+              </p>
+
+              <p>
+                We believe Christians are called to give their time, resources,
+                gifts, and love in service to others. Faith is not passive.
+                It should be visible in the way we care for people and respond
+                to the needs around us.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.values}>
+        <div className={styles.container}>
+          <div className={styles.valuesHeader}>
+            <p className={styles.sectionLabel}>What guides us</p>
+
+            <h2>A faith that becomes action.</h2>
+          </div>
+
+          <div className={styles.valueGrid}>
+            <article>
+              <span>01</span>
+
+              <h3>Love God</h3>
+
+              <p>
+                A life centered on Christ, shaped by worship, prayer, trust,
+                and obedience.
+              </p>
+            </article>
+
+            <article>
+              <span>02</span>
+
+              <h3>Love people</h3>
+
+              <p>
+                Meet people with compassion, dignity, generosity, and genuine
+                care.
+              </p>
+            </article>
+
+            <article>
+              <span>03</span>
+
+              <h3>Do good</h3>
+
+              <p>
+                Put faith into motion through service, generosity, and work
+                that makes a real difference.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.callout}>
+        <div className={styles.container}>
+          <div className={styles.calloutInner}>
+            <p className={styles.sectionLabel}>Together</p>
+
+            <div>
+              <h2>
+                A bigger mission than any one of us can accomplish alone.
+              </h2>
+
+              <p>
+                Trust Church calls people into a life surrendered to Christ,
+                united in His body, and committed to bringing glory to God
+                through worship and good works.
+              </p>
+
+              <Link href="/volunteer" className={styles.button}>
+                Find a way to serve
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
