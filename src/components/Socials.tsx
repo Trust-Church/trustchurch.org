@@ -8,7 +8,7 @@ const socials = [
   },
   {
     name: "GitHub",
-    href: "https://github.com/trustchurch",
+    href: "https://github.com/trust-church",
     Icon: FaGithub,
   },
   {
