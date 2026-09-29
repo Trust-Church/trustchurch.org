@@ -1,13 +1,33 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import {
+  use,
+  useEffect,
+  useMemo,
+  useState,
+  type FocusEvent,
+  type FormEvent,
+} from "react";
+
 import Link from "next/link";
+
 import {
   FaTwitter,
   FaLinkedin,
   FaGithub,
   FaInstagram,
 } from "react-icons/fa";
+
+import {
+  ACCEPTED_RESUME_EXTENSIONS,
+  APPLICATION_LIMITS,
+  normalizeSocialInput,
+  validateEmail,
+  validateName,
+  validatePhone,
+  validateResume,
+  type SocialPlatform,
+} from "@/lib/volunteerApplicationValidation";
 
 type Career = {
   id: string;
@@ -19,26 +39,48 @@ type Career = {
   positionDetails?: string;
 };
 
+type SocialErrors = Partial<
+  Record<SocialPlatform, string>
+>;
+
 export default function ApplyPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
   const { id } = use(params);
 
-  const [career, setCareer] = useState<Career | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [career, setCareer] =
+    useState<Career | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [okMsg, setOkMsg] =
+    useState<string | null>(null);
+
+  const [socialErrors, setSocialErrors] =
+    useState<SocialErrors>({});
 
   useEffect(() => {
     const fetchCareer = async () => {
       try {
-        const res = await fetch(`/api/volunteer/${id}`);
+        const res = await fetch(
+          `/api/volunteer/${encodeURIComponent(id)}`
+        );
 
         if (!res.ok) {
-          throw new Error("Opportunity not found");
+          throw new Error(
+            "Opportunity not found"
+          );
         }
 
         const data = await res.json();
@@ -46,9 +88,14 @@ export default function ApplyPage({
         setCareer(data.career ?? null);
       } catch (e: unknown) {
         if (e instanceof Error) {
-          setError(e.message || "Failed to load opportunity");
+          setError(
+            e.message ||
+              "Failed to load opportunity"
+          );
         } else {
-          setError("Failed to load opportunity");
+          setError(
+            "Failed to load opportunity"
+          );
         }
       } finally {
         setLoading(false);
@@ -59,63 +106,361 @@ export default function ApplyPage({
   }, [id]);
 
   const acceptExt = useMemo(
-    () => ".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.heic",
+    () =>
+      ACCEPTED_RESUME_EXTENSIONS.join(","),
     []
   );
 
-  async function onSubmit(
-    e: React.FormEvent<HTMLFormElement>
+  function normalizeSocialField(
+    event: FocusEvent<HTMLInputElement>,
+    platform: SocialPlatform
   ) {
-    e.preventDefault();
+    const value =
+      event.currentTarget.value.trim();
 
-    setSubmitting(true);
+    if (!value) {
+      setSocialErrors((current) => ({
+        ...current,
+        [platform]: undefined,
+      }));
+
+      return;
+    }
+
+    const result = normalizeSocialInput(
+      platform,
+      value
+    );
+
+    if (!result.valid) {
+      setSocialErrors((current) => ({
+        ...current,
+        [platform]: result.message,
+      }));
+
+      return;
+    }
+
+    /*
+     * Update the visible field so users can
+     * see exactly what canonical profile URL
+     * will be submitted.
+     */
+    event.currentTarget.value = result.value;
+
+    setSocialErrors((current) => ({
+      ...current,
+      [platform]: undefined,
+    }));
+  }
+
+  function validateApplication(
+    fd: FormData
+  ): string | null {
+    const firstName = String(
+      fd.get("firstName") ?? ""
+    ).trim();
+
+    const middleName = String(
+      fd.get("middleName") ?? ""
+    ).trim();
+
+    const lastName = String(
+      fd.get("lastName") ?? ""
+    ).trim();
+
+    const phone = String(
+      fd.get("phone") ?? ""
+    ).trim();
+
+    const email = String(
+      fd.get("email") ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    const firstNameResult = validateName(
+      firstName,
+      "First name",
+      true,
+      APPLICATION_LIMITS.firstName
+    );
+
+    if (!firstNameResult.valid) {
+      return (
+        firstNameResult.message ||
+        "Enter a valid first name."
+      );
+    }
+
+    const middleNameResult = validateName(
+      middleName,
+      "Middle name",
+      false,
+      APPLICATION_LIMITS.middleName
+    );
+
+    if (!middleNameResult.valid) {
+      return (
+        middleNameResult.message ||
+        "Enter a valid middle name."
+      );
+    }
+
+    const lastNameResult = validateName(
+      lastName,
+      "Last name",
+      true,
+      APPLICATION_LIMITS.lastName
+    );
+
+    if (!lastNameResult.valid) {
+      return (
+        lastNameResult.message ||
+        "Enter a valid last name."
+      );
+    }
+
+    const phoneResult =
+      validatePhone(phone);
+
+    if (!phoneResult.valid) {
+      return (
+        phoneResult.message ||
+        "Enter a valid phone number."
+      );
+    }
+
+    const emailResult =
+      validateEmail(email);
+
+    if (!emailResult.valid) {
+      return (
+        emailResult.message ||
+        "Enter a valid email address."
+      );
+    }
+
+const socialPlatforms: SocialPlatform[] = [
+  "twitter",
+  "linkedin",
+  "github",
+  "instagram",
+];
+
+const socialsObj: Record<string, string> = {};
+
+for (const platform of socialPlatforms) {
+  const rawValue = String(
+    fd.get(platform) ?? ""
+  ).trim();
+
+  if (!rawValue) {
+    continue;
+  }
+
+  const result = normalizeSocialInput(
+    platform,
+    rawValue
+  );
+
+  if (!result.valid) {
+    const label =
+      platform === "twitter"
+        ? "X / Twitter"
+        : platform.charAt(0).toUpperCase() +
+          platform.slice(1);
+
+    throw new Error(
+      `${label}: ${result.message}`
+    );
+  }
+
+  /*
+   * Save canonical HTTPS URL.
+   *
+   * Examples:
+   *
+   * B3POio
+   * github.com/B3POio
+   * http://www.github.com/B3POio
+   *
+   * all become:
+   *
+   * https://github.com/B3POio
+   */
+  const canonicalUrl = result.value;
+
+  socialsObj[platform] = canonicalUrl;
+
+  /*
+   * Preserve the original FormData fields,
+   * but replace their values with the
+   * validated canonical HTTPS URL.
+   */
+  fd.set(
+    platform,
+    canonicalUrl
+  );
+}
+
+/*
+ * Preserve the existing serialized
+ * socials object expected by the backend.
+ */
+fd.set(
+  "socials",
+  JSON.stringify(socialsObj)
+);
+
+    const resumeValue =
+      fd.get("resume");
+
+    const resume =
+      resumeValue instanceof File
+        ? resumeValue
+        : null;
+
+    const resumeResult =
+      validateResume(resume);
+
+    if (!resumeResult.valid) {
+      return (
+        resumeResult.message ||
+        "Select a valid resume file."
+      );
+    }
+
+    return null;
+  }
+
+  async function onSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
     setError(null);
     setOkMsg(null);
+    setSocialErrors({});
+
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+
+    const validationError =
+      validateApplication(fd);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      const form = e.currentTarget;
-      const fd = new FormData(form);
+      /*
+       * Normalize personal information.
+       */
+      const firstName = String(
+        fd.get("firstName") ?? ""
+      ).trim();
 
+      const middleName = String(
+        fd.get("middleName") ?? ""
+      ).trim();
+
+      const lastName = String(
+        fd.get("lastName") ?? ""
+      ).trim();
+
+      const phone = String(
+        fd.get("phone") ?? ""
+      ).trim();
+
+      const email = String(
+        fd.get("email") ?? ""
+      )
+        .trim()
+        .toLowerCase();
+
+      fd.set("firstName", firstName);
+      fd.set("middleName", middleName);
+      fd.set("lastName", lastName);
+      fd.set("phone", phone);
+      fd.set("email", email);
+
+      /*
+       * Preserve your existing API contract.
+       */
       fd.set("jobId", id);
 
       if (career?.title) {
-        fd.set("jobTitle", career.title);
+        fd.set(
+          "jobTitle",
+          career.title
+        );
       }
 
-      const twitter =
-        (fd.get("twitter") as string | null)?.trim() || "";
+      /*
+       * Normalize all social fields into
+       * canonical HTTPS URLs.
+       */
+      const socialPlatforms: SocialPlatform[] = [
+        "twitter",
+        "linkedin",
+        "github",
+        "instagram",
+      ];
 
-      const linkedin =
-        (fd.get("linkedin") as string | null)?.trim() || "";
+      const socialsObj: Record<
+        string,
+        string
+      > = {};
 
-      const github =
-        (fd.get("github") as string | null)?.trim() || "";
+      for (const platform of socialPlatforms) {
+        const rawValue = String(
+          fd.get(platform) ?? ""
+        ).trim();
 
-      const instagram =
-        (fd.get("instagram") as string | null)?.trim() || "";
+        if (!rawValue) {
+          continue;
+        }
 
-      const socialsObj: Record<string, string> = {};
+        const result =
+          normalizeSocialInput(
+            platform,
+            rawValue
+          );
 
-      if (twitter) {
-        socialsObj.twitter = twitter.replace(/^@/, "");
+        /*
+         * Should already have been caught
+         * during validateApplication(), but
+         * keep the submission path defensive.
+         */
+        if (!result.valid) {
+          throw new Error(
+            result.message
+          );
+        }
+
+        if (result.value) {
+          socialsObj[platform] =
+            result.value;
+        }
       }
 
-      if (instagram) {
-        socialsObj.instagram = instagram.replace(/^@/, "");
-      }
-
-      if (linkedin) {
-        socialsObj.linkedin = linkedin;
-      }
-
-      if (github) {
-        socialsObj.github = github;
-      }
-
-      fd.set("socials", JSON.stringify(socialsObj));
+      /*
+       * Backend already expects socials as
+       * JSON inside the multipart request.
+       */
+      fd.set(
+        "socials",
+        JSON.stringify(socialsObj)
+      );
 
       const res = await fetch(
-        `/api/volunteer/${id}/apply`,
+        `/api/volunteer/${encodeURIComponent(
+          id
+        )}/apply`,
         {
           method: "POST",
           body: fd,
@@ -123,23 +468,30 @@ export default function ApplyPage({
       );
 
       if (!res.ok) {
-        const text = await res.text();
+        const text =
+          await res.text();
 
         throw new Error(
-          text || `Submit failed (${res.status})`
+          text ||
+            `Submit failed (${res.status})`
         );
       }
 
-      const data: unknown = await res
-        .json()
-        .catch(() => ({}));
+      const data: unknown =
+        await res
+          .json()
+          .catch(() => ({}));
 
       const message =
         typeof data === "object" &&
         data !== null &&
         "message" in data
           ? String(
-              (data as { message?: unknown }).message ??
+              (
+                data as {
+                  message?: unknown;
+                }
+              ).message ??
                 "Application submitted!"
             )
           : "Application submitted!";
@@ -150,10 +502,13 @@ export default function ApplyPage({
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(
-          err.message || "Submission failed"
+          err.message ||
+            "Submission failed"
         );
       } else {
-        setError("Submission failed");
+        setError(
+          "Submission failed"
+        );
       }
     } finally {
       setSubmitting(false);
@@ -197,8 +552,18 @@ export default function ApplyPage({
   const labelClass =
     "block text-sm font-medium text-[#34372f]";
 
+  const socialInputClass =
+    "min-w-0 flex-1 bg-transparent py-3 outline-none placeholder:text-[#a1a39c]";
+
+  const socialWrapperClass =
+    "mt-2 flex items-center border border-[#cbc9bf] bg-[#fbfaf6] px-4 transition-colors focus-within:border-[#657052]";
+
+  const socialErrorClass =
+    "mt-2 text-xs leading-5 text-[#853c32]";
+
   return (
     <main className="bg-[#f5f3ed] text-[#1b1d19]">
+      {/* Header */}
       <section className="border-b border-[#dcdcd3] py-16 sm:py-20">
         <div className="mx-auto w-full max-w-4xl px-5 sm:px-8">
           <Link
@@ -215,6 +580,7 @@ export default function ApplyPage({
           <h1 className="font-serif text-[clamp(3.25rem,7vw,5.75rem)] font-normal leading-[0.97] tracking-[-0.05em]">
             Apply for
             <br />
+
             <span className="italic text-[#657052]">
               {career.title}
             </span>
@@ -228,6 +594,7 @@ export default function ApplyPage({
         </div>
       </section>
 
+      {/* Application */}
       <section className="py-20 sm:py-24">
         <div className="mx-auto w-full max-w-4xl px-5 sm:px-8">
           <form
@@ -257,6 +624,10 @@ export default function ApplyPage({
                     id="firstName"
                     name="firstName"
                     required
+                    minLength={1}
+                    maxLength={
+                      APPLICATION_LIMITS.firstName
+                    }
                     autoComplete="given-name"
                     className={inputClass}
                   />
@@ -273,6 +644,9 @@ export default function ApplyPage({
                   <input
                     id="middleName"
                     name="middleName"
+                    maxLength={
+                      APPLICATION_LIMITS.middleName
+                    }
                     autoComplete="additional-name"
                     className={inputClass}
                   />
@@ -290,6 +664,10 @@ export default function ApplyPage({
                     id="lastName"
                     name="lastName"
                     required
+                    minLength={1}
+                    maxLength={
+                      APPLICATION_LIMITS.lastName
+                    }
                     autoComplete="family-name"
                     className={inputClass}
                   />
@@ -310,6 +688,12 @@ export default function ApplyPage({
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
+                    minLength={7}
+                    maxLength={
+                      APPLICATION_LIMITS.phone
+                    }
+                    pattern="[0-9+().\-\s]{7,25}"
+                    title="Enter a valid phone number."
                     className={inputClass}
                   />
                 </div>
@@ -327,6 +711,9 @@ export default function ApplyPage({
                     type="email"
                     name="email"
                     required
+                    maxLength={
+                      APPLICATION_LIMITS.email
+                    }
                     autoComplete="email"
                     className={inputClass}
                   />
@@ -334,18 +721,20 @@ export default function ApplyPage({
               </div>
             </fieldset>
 
-            {/* Socials */}
+            {/* Social profiles */}
             <fieldset className="border-t border-[#dcdcd3] pt-14">
               <legend className="font-serif text-3xl tracking-[-0.035em]">
                 Social profiles
               </legend>
 
-              <p className="mt-3 text-sm leading-6 text-[#6c7067]">
-                Optional. Share any profiles that help us learn more about
-                your work and interests.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6c7067]">
+                Optional. Enter a username or profile URL. We&apos;ll
+                automatically convert valid profiles to their secure HTTPS
+                address.
               </p>
 
-              <div className="mt-8 grid gap-5 sm:grid-cols-2">
+              <div className="mt-8 grid gap-6 sm:grid-cols-2">
+                {/* X / Twitter */}
                 <div>
                   <label
                     htmlFor="twitter"
@@ -354,22 +743,57 @@ export default function ApplyPage({
                     X / Twitter
                   </label>
 
-                  <div className="mt-2 flex items-center border border-[#cbc9bf] bg-[#fbfaf6] px-4 focus-within:border-[#657052]">
+                  <div className={socialWrapperClass}>
                     <FaTwitter
                       aria-hidden="true"
-                      className="mr-3 text-[#6c7067]"
+                      className="mr-3 shrink-0 text-[#6c7067]"
                     />
 
                     <input
                       id="twitter"
                       type="text"
                       name="twitter"
-                      className="min-w-0 flex-1 bg-transparent py-3 outline-none"
-                      placeholder="@username"
+                      maxLength={
+                        APPLICATION_LIMITS.socialUrl
+                      }
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className={socialInputClass}
+                      placeholder="username or x.com/username"
+                      aria-invalid={
+                        Boolean(
+                          socialErrors.twitter
+                        )
+                      }
+                      aria-describedby={
+                        socialErrors.twitter
+                          ? "twitter-error"
+                          : undefined
+                      }
+                      onBlur={(event) =>
+                        normalizeSocialField(
+                          event,
+                          "twitter"
+                        )
+                      }
                     />
                   </div>
+
+                  {socialErrors.twitter && (
+                    <p
+                      id="twitter-error"
+                      className={
+                        socialErrorClass
+                      }
+                    >
+                      {socialErrors.twitter}
+                    </p>
+                  )}
                 </div>
 
+                {/* LinkedIn */}
                 <div>
                   <label
                     htmlFor="linkedin"
@@ -378,22 +802,57 @@ export default function ApplyPage({
                     LinkedIn
                   </label>
 
-                  <div className="mt-2 flex items-center border border-[#cbc9bf] bg-[#fbfaf6] px-4 focus-within:border-[#657052]">
+                  <div className={socialWrapperClass}>
                     <FaLinkedin
                       aria-hidden="true"
-                      className="mr-3 text-[#6c7067]"
+                      className="mr-3 shrink-0 text-[#6c7067]"
                     />
 
                     <input
                       id="linkedin"
                       type="text"
                       name="linkedin"
-                      className="min-w-0 flex-1 bg-transparent py-3 outline-none"
-                      placeholder="linkedin.com/in/username"
+                      maxLength={
+                        APPLICATION_LIMITS.socialUrl
+                      }
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className={socialInputClass}
+                      placeholder="username or linkedin.com/in/username"
+                      aria-invalid={
+                        Boolean(
+                          socialErrors.linkedin
+                        )
+                      }
+                      aria-describedby={
+                        socialErrors.linkedin
+                          ? "linkedin-error"
+                          : undefined
+                      }
+                      onBlur={(event) =>
+                        normalizeSocialField(
+                          event,
+                          "linkedin"
+                        )
+                      }
                     />
                   </div>
+
+                  {socialErrors.linkedin && (
+                    <p
+                      id="linkedin-error"
+                      className={
+                        socialErrorClass
+                      }
+                    >
+                      {socialErrors.linkedin}
+                    </p>
+                  )}
                 </div>
 
+                {/* GitHub */}
                 <div>
                   <label
                     htmlFor="github"
@@ -402,22 +861,57 @@ export default function ApplyPage({
                     GitHub
                   </label>
 
-                  <div className="mt-2 flex items-center border border-[#cbc9bf] bg-[#fbfaf6] px-4 focus-within:border-[#657052]">
+                  <div className={socialWrapperClass}>
                     <FaGithub
                       aria-hidden="true"
-                      className="mr-3 text-[#6c7067]"
+                      className="mr-3 shrink-0 text-[#6c7067]"
                     />
 
                     <input
                       id="github"
                       type="text"
                       name="github"
-                      className="min-w-0 flex-1 bg-transparent py-3 outline-none"
-                      placeholder="github.com/username"
+                      maxLength={
+                        APPLICATION_LIMITS.socialUrl
+                      }
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className={socialInputClass}
+                      placeholder="username or github.com/username"
+                      aria-invalid={
+                        Boolean(
+                          socialErrors.github
+                        )
+                      }
+                      aria-describedby={
+                        socialErrors.github
+                          ? "github-error"
+                          : undefined
+                      }
+                      onBlur={(event) =>
+                        normalizeSocialField(
+                          event,
+                          "github"
+                        )
+                      }
                     />
                   </div>
+
+                  {socialErrors.github && (
+                    <p
+                      id="github-error"
+                      className={
+                        socialErrorClass
+                      }
+                    >
+                      {socialErrors.github}
+                    </p>
+                  )}
                 </div>
 
+                {/* Instagram */}
                 <div>
                   <label
                     htmlFor="instagram"
@@ -426,20 +920,54 @@ export default function ApplyPage({
                     Instagram
                   </label>
 
-                  <div className="mt-2 flex items-center border border-[#cbc9bf] bg-[#fbfaf6] px-4 focus-within:border-[#657052]">
+                  <div className={socialWrapperClass}>
                     <FaInstagram
                       aria-hidden="true"
-                      className="mr-3 text-[#6c7067]"
+                      className="mr-3 shrink-0 text-[#6c7067]"
                     />
 
                     <input
                       id="instagram"
                       type="text"
                       name="instagram"
-                      className="min-w-0 flex-1 bg-transparent py-3 outline-none"
-                      placeholder="@username"
+                      maxLength={
+                        APPLICATION_LIMITS.socialUrl
+                      }
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className={socialInputClass}
+                      placeholder="username or instagram.com/username"
+                      aria-invalid={
+                        Boolean(
+                          socialErrors.instagram
+                        )
+                      }
+                      aria-describedby={
+                        socialErrors.instagram
+                          ? "instagram-error"
+                          : undefined
+                      }
+                      onBlur={(event) =>
+                        normalizeSocialField(
+                          event,
+                          "instagram"
+                        )
+                      }
                     />
                   </div>
+
+                  {socialErrors.instagram && (
+                    <p
+                      id="instagram-error"
+                      className={
+                        socialErrorClass
+                      }
+                    >
+                      {socialErrors.instagram}
+                    </p>
+                  )}
                 </div>
               </div>
             </fieldset>
@@ -451,8 +979,8 @@ export default function ApplyPage({
               </legend>
 
               <p className="mt-3 text-sm leading-6 text-[#6c7067]">
-                Upload a resume or document that helps us understand your
-                experience.
+                Upload a resume or supporting document that helps us understand
+                your experience.
               </p>
 
               <div className="mt-8 border border-dashed border-[#aaa99f] bg-[#fbfaf6] p-6">
@@ -472,12 +1000,12 @@ export default function ApplyPage({
                 />
 
                 <p className="mt-3 text-xs leading-5 text-[#8b8e86]">
-                  PDF, DOC, DOCX, PNG, JPG, JPEG, WEBP or HEIC. Maximum
-                  approximately 10 MB.
+                  PDF, DOC, DOCX, PNG, JPG, JPEG, WEBP, or HEIC. Maximum 10 MB.
                 </p>
               </div>
             </fieldset>
 
+            {/* General error */}
             {error && (
               <div
                 role="alert"
@@ -487,6 +1015,7 @@ export default function ApplyPage({
               </div>
             )}
 
+            {/* Success */}
             {okMsg && (
               <div
                 role="status"
@@ -496,6 +1025,7 @@ export default function ApplyPage({
               </div>
             )}
 
+            {/* Submit */}
             <div className="border-t border-[#dcdcd3] pt-8">
               <button
                 type="submit"

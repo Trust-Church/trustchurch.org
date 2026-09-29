@@ -262,7 +262,7 @@ Welcome to Trust Church!
 
 We’re so glad you’re here.
 
-This is more than just a community—it’s a family rooted in God, strengthened by faith, and dedicated to good works and goodwill toward all. Here, you’ll find encouragement, purpose, and a place to grow alongside others who share the same heart for service and connection.
+This is more than just a community; it’s a family rooted in God, strengthened by faith, and dedicated to good works and goodwill toward all. Here, you’ll find encouragement, purpose, and a place to grow alongside others who share the same heart for service and connection.
 
 Our mission is simple: to walk in love, build each other up, and shine light into the world through faith and action. Together, we can make a difference.
 

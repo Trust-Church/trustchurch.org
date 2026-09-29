@@ -38,7 +38,7 @@ export default function AboutPage() {
             <div className={styles.largeCopy}>
               <p>
                 Trust Church exists to awaken hearts, unite the Church, and
-                step boldly into the mission of Christ — bringing hope,
+                step boldly into the mission of Christ; bringing hope,
                 healing, and transformation to a broken world.
               </p>
 
@@ -67,7 +67,7 @@ export default function AboutPage() {
               <p>
                 Loving people practically means moving beyond the walls of the
                 church and into the streets, schools, neighborhoods, and
-                communities — wherever there is a need.
+                communities; wherever there is a need.
               </p>
 
               <p>
