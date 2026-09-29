@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import styles from "./about.module.css";
+import SubscribeCallout from "@/components/SubscribeCallout";
 
 export const metadata = {
   title: "About",
@@ -27,6 +28,8 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
+            
+      <SubscribeCallout />
 
       <section className={styles.introduction}>
         <div className={styles.container}>

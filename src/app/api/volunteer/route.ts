@@ -5,7 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const snapshot = await db.collection("careers").get();
+    const snapshot = await db
+      .collection("careers")
+      .where("active", "==", true)
+      .get();
 
     const careers = snapshot.docs.map((doc) => ({
       id: doc.id,
