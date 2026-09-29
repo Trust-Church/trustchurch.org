@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import Socials from "@/components/Socials";
-
 import styles from "./about.module.css";
 
 export const metadata = {

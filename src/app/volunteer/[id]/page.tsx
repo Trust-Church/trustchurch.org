@@ -304,8 +304,7 @@ export default function CareerPage({
               ?.length ? (
               <section className="border-b border-[#dcdcd3] py-16">
                 <h2 className="font-serif text-4xl font-normal tracking-[-0.04em]">
-                  What we're looking
-                  for
+                  What we&apos;re looking for
                 </h2>
 
                 <ul className="mt-8 space-y-5">
@@ -339,7 +338,7 @@ export default function CareerPage({
               ?.length ? (
               <section className="py-16">
                 <h2 className="font-serif text-4xl font-normal tracking-[-0.04em]">
-                  What you'll gain
+                  What you&apos;ll gain
                 </h2>
 
                 <ul className="mt-8 space-y-5">
