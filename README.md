@@ -1,169 +1,197 @@
-# Trust Church — Landing Page & App Foundation (trustchurch.org)
+# Trust Church
 
-This repository powers **trustchurch.org** — the landing experience for **Trust Church** and the starting point for the future **Trust Church app + tools**.
+The official website for [Trust Church](https://trustchurch.org).
 
-Our goal is simple: **bring God’s Kingdom together** through a growing set of digital tools that help people connect, serve, and make a positive impact on the world. The landing page is the first step—introducing Trust Church, sharing updates, and collecting interest as the platform expands.
+Trust Church is a community of believers focused on connecting, serving, and putting faith into action wherever there is a need.
 
----
+Our goal is simple: bring God's Kingdom together through community, service, encouragement, and digital tools that help believers make a positive impact in the world.
 
-## ✨ Vision
+## About
 
-Trust Church is building a modern digital foundation for:
-- **Community & connection** (people, groups, discipleship, relationships)
-- **Service & volunteering** (matching needs with action)
-- **Communication & updates** (announcements, events, and real-time outreach)
-- **Tools for impact** that support local ministry and global good
+Trust Church is building a digital foundation for:
 
-This site will evolve alongside the Trust Church platform as new features roll out.
+- **Community & connection** — bringing believers together through relationships, groups, and discipleship
+- **Service & volunteering** — connecting people with opportunities to serve
+- **Communication & updates** — sharing announcements, opportunities, and community updates
+- **Tools for impact** — building technology that supports ministry, outreach, and practical service
 
----
+The website will continue to evolve as the Trust Church community and platform grow.
 
-## 🚀 What This Project Includes (Today)
+## Features
 
-- A modern **Next.js (App Router)** web app
-- A fast, responsive landing page experience
-- An **email subscription** flow to keep people informed as the app grows
-- Shared layout/components for consistent branding across new routes/pages
+- Responsive Trust Church website
+- Email community subscription
+- Public community member count
+- Volunteer opportunities
+- Volunteer applications
+- Social links and community resources
+- Reusable site-wide navigation and components
+- API routes for subscriptions and application handling
 
----
+## Tech Stack
 
-## 🧱 Tech Stack
+- [Next.js](https://nextjs.org/) — App Router
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- Firebase / Firestore
+- Next.js Route Handlers
 
-- **Next.js (App Router)** + TypeScript
-- **React** functional components & hooks
-- **Tailwind CSS** for styling
-- API routes for subscription handling
+## Getting Started
 
----
+Clone the repository:
 
-## 📂 Project Structure
-
+```bash
+git clone https://github.com/Trust-Church/trustchurch.org.git
+cd trustchurch.org
 ```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Configure the required environment variables for your local environment.
+
+Then start the development server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Scripts
+
+```bash
+npm run dev
+```
+
+Starts the local development server.
+
+```bash
+npm run build
+```
+
+Creates a production build.
+
+```bash
+npm run start
+```
+
+Runs the production server.
+
+```bash
+npm run lint
+```
+
+Runs the project's linting checks.
+
+## API
+
+The application uses Next.js Route Handlers for server-side functionality.
+
+### Community Subscription
+
+```text
+POST /api/subscribers
+```
+
+Handles community email subscriptions.
+
+Example request:
+
+```json
+{
+  "email": "example@email.com"
+}
+```
+
+### Community Count
+
+```text
+GET /api/subscribers/count
+```
+
+Returns the current number of community subscribers.
+
+Example response:
+
+```json
+{
+  "totalSubscribers": 123
+}
+```
+
+Only the aggregate count is exposed publicly. Subscriber records and email addresses are not returned by this endpoint.
+
+## Project Structure
+
+```text
 .
-├── eslint.config.mjs         # ESLint config with Next.js & TypeScript rules
-├── next-env.d.ts             # Next.js type declarations
-├── next.config.ts            # Next.js configuration (custom build/runtime settings)
-├── package.json              # Project metadata, dependencies, scripts
-├── package-lock.json         # Dependency lockfile
-├── postcss.config.mjs        # PostCSS setup (Tailwind plugin)
-├── tsconfig.json             # TypeScript configuration (strict, path aliases)
+├── public/                 # Static assets
+├── src/
+│   ├── app/                # Next.js App Router
+│   │   ├── api/            # Server-side route handlers
+│   │   ├── about/          # About Trust Church
+│   │   ├── volunteer/      # Volunteer opportunities and applications
+│   │   ├── globals.css     # Global styles
+│   │   ├── layout.tsx      # Root layout and metadata
+│   │   └── page.tsx        # Homepage
+│   │
+│   ├── components/         # Shared UI components
+│   └── lib/                # Shared utilities and server helpers
 │
-├── public/                   # Static assets (favicons, images, etc.)
-│   └── favicon.ico           # App favicon
-│
-└── src/
-    ├── app/
-    │   ├── globals.css       # Global styles, Tailwind + theme variables
-    │   ├── layout.tsx        # Root layout, applies fonts & metadata
-    │   ├── page.tsx          # Main landing page with subscription form
-    │   │
-    │   ├── api/
-    │   │   └── subscribe/
-    │   │       ├── route.ts  # Handles email subscription POST requests
-    │   │       └── count/
-    │   │           └── route.ts # Returns total subscriber count
-    │   │
-    │   └── favicon.ico       # Shortcut favicon reference
-    │
-    ├── components/
-    │   ├── Footer.tsx       # Global styles, Tailwind + theme variables
-    │   ├── Socials.tsx        # Root layout, applies fonts & metadata
-    │
-    └── lib/
-        └── getApiUrl.ts      # Utility for constructing API base URLs
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+└── tsconfig.json
 ```
 
----
+## Development
 
-## 🔌 API Endpoints
+When contributing:
 
-### `POST /api/subscribe`
+- Keep components accessible and keyboard friendly
+- Validate user input on both the client and server
+- Never expose private subscriber or application data through public endpoints
+- Keep secrets and credentials out of source control
+- Prefer reusable components over duplicated UI
+- Maintain responsive behavior across mobile and desktop
+- Keep pull requests focused and clearly documented
 
-Accepts:
+## Roadmap
 
-```json
-{ "email": "example@email.com" }
-```
+Trust Church is continuing to expand its digital tools, including:
 
-Stores the subscriber entry in your chosen backend (Firebase/DB/etc.).
+- Expanded volunteer and service tools
+- Events and gatherings
+- Community groups
+- Discipleship resources
+- Communication and outreach tools
+- Ministry administration tools
+- Additional ways for the community to connect and serve
 
-### `GET /api/subscribe/count`
+## Contributing
 
-Returns:
+Contributions that support the mission of Trust Church and improve the security, accessibility, usability, or maintainability of the project are welcome.
 
-```json
-{ "totalSubscribers": 123 }
-```
+Please open an issue or pull request through GitHub.
 
-Used to display/refresh the current subscriber count.
+## Socials
 
----
+Stay connected with Trust Church:
 
-## ⚙️ Scripts
+- [Instagram](https://instagram.com/trust_church)
+- [X](https://x.com/TrustChurchOrg)
+- [GitHub](https://github.com/trustchurch)
+- [Primal](https://primal.net/trustchurch)
 
-* `npm run dev` — Start dev server
-* `npm run build` — Production build
-* `npm run start` — Run production server
-* `npm run lint` — Lint the codebase
+## Website
 
----
-
-## 🛠️ Getting Started
-
-1. Clone the repo
-
-   ```bash
-   git clone https://github.com/Trust-Church/trustchurch.org.git
-   cd trustchurch.org
-   ```
-
-2. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-3. Run locally
-
-   ```bash
-   npm run dev
-   ```
-
-4. Open [http://localhost:3000](http://localhost:3000)
-
----
-
-## 🗺️ Roadmap (High-Level)
-
-Planned expansions as Trust Church tools mature:
-
-* Volunteer onboarding + opportunities directory
-* Events & gatherings
-* Community groups & discipleship tooling
-* Giving/support features (as needed)
-* Admin tooling to support ministry and outreach
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome—especially improvements that support the mission and help keep the codebase clean, secure, and accessible.
-
-If you’re submitting changes:
-
-* Keep components accessible (ARIA, keyboard navigation)
-* Prefer small PRs with clear intent
-* Maintain consistent styling patterns
-
----
-
-## 📣 Socials
-
-Follow Trust Church and stay connected:
-
-* Instagram: [https://instagram.com/trust_church](https://instagram.com/trust_church)
-* X: [https://x.com/TrustChurchOrg](https://x.com/TrustChurchOrg)
-* GitHub: [https://github.com/trustchurch](https://github.com/trustchurch)
-* Primal: [https://primal.net/trustchurch](https://primal.net/trustchurch)
-
-
+[trustchurch.org](https://trustchurch.org)
