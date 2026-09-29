@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
-
 import { db } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
+
+type CareerDocument = {
+  id: string;
+  data: () => Record<string, unknown>;
+};
 
 export async function GET() {
   try {
@@ -13,7 +16,7 @@ export async function GET() {
       .get();
 
     const careers = snapshot.docs.map(
-      (doc: QueryDocumentSnapshot) => ({
+      (doc: CareerDocument) => ({
         id: doc.id,
         ...doc.data(),
       })
@@ -29,7 +32,10 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("Error getting volunteer opportunities:", error);
+    console.error(
+      "Error getting volunteer opportunities:",
+      error
+    );
 
     return NextResponse.json(
       { error: "Internal Server Error" },
