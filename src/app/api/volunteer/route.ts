@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
+
 import { db } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +12,12 @@ export async function GET() {
       .where("active", "==", true)
       .get();
 
-    const careers = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const careers = snapshot.docs.map(
+      (doc: QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...doc.data(),
+      })
+    );
 
     return NextResponse.json(
       { careers },
