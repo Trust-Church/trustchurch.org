@@ -1,10 +1,17 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import Link from "next/link";
-import Footer from "@/components/Footer";
+import {
+  use,
+  useEffect,
+  useState,
+} from "react";
 
-type FirestoreTimestamp = { _seconds: number; _nanoseconds: number };
+import Link from "next/link";
+
+type FirestoreTimestamp = {
+  _seconds: number;
+  _nanoseconds: number;
+};
 
 type Career = {
   id: string;
@@ -14,8 +21,6 @@ type Career = {
   location?: string;
   employmentType?: string;
   positionDetails?: string;
-
-  // New fields from the API
   salaryRange?: string;
   requirements?: string[];
   responsibilities?: string[];
@@ -24,152 +29,386 @@ type Career = {
   postedAt?: FirestoreTimestamp;
 };
 
-function formatPostedAt(ts?: FirestoreTimestamp) {
-  if (!ts || typeof ts._seconds !== "number") return undefined;
-  return new Date(ts._seconds * 1000).toLocaleDateString();
+function formatPostedAt(
+  ts?: FirestoreTimestamp
+) {
+  if (
+    !ts ||
+    typeof ts._seconds !== "number"
+  ) {
+    return undefined;
+  }
+
+  return new Date(
+    ts._seconds * 1000
+  ).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 export default function CareerPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
-  // unwrap the promise
   const { id } = use(params);
 
-  const [career, setCareer] = useState<Career | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [
+    career,
+    setCareer,
+  ] = useState<Career | null>(null);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
   useEffect(() => {
-    const go = async () => {
+    const fetchCareer = async () => {
       try {
-        const res = await fetch(`/api/volunteer/${id}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Not found");
-        const data = await res.json();
-        setCareer(data.career ?? null);
+        const res = await fetch(
+          `/api/volunteer/${id}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(
+            "Volunteer opportunity not found"
+          );
+        }
+
+        const data =
+          await res.json();
+
+        setCareer(
+          data.career ?? null
+        );
+      } catch (error) {
+        console.error(error);
+
+        setCareer(null);
       } finally {
         setLoading(false);
       }
     };
-    go();
+
+    fetchCareer();
   }, [id]);
 
-  if (loading) return <p className="p-6">Loading…</p>;
-  if (!career) return <p className="p-6">Career not found.</p>;
+  if (loading) {
+    return (
+      <main className="min-h-[60vh] bg-[#f5f3ed]">
+        <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8 lg:px-12">
+          <p className="text-[#6c7067]">
+            Loading opportunity…
+          </p>
+        </div>
+      </main>
+    );
+  }
 
-  const postedAt = formatPostedAt(career.postedAt);
+  if (!career) {
+    return (
+      <main className="min-h-[60vh] bg-[#f5f3ed]">
+        <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8 lg:px-12">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+            Volunteer
+          </p>
+
+          <h1 className="font-serif text-5xl tracking-[-0.045em]">
+            Opportunity not found.
+          </h1>
+
+          <Link
+            href="/volunteer"
+            className="mt-8 inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline"
+          >
+            ← Back to volunteer opportunities
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const postedAt =
+    formatPostedAt(
+      career.postedAt
+    );
+
+  const meta = [
+    career.department && {
+      label: "Department",
+      value: career.department,
+    },
+
+    career.location && {
+      label: "Location",
+      value: career.location,
+    },
+
+    career.employmentType && {
+      label: "Commitment",
+      value:
+        career.employmentType,
+    },
+
+    career.salaryRange && {
+      label: "Compensation",
+      value:
+        career.salaryRange,
+    },
+
+    postedAt && {
+      label: "Posted",
+      value: postedAt,
+    },
+  ].filter(Boolean) as {
+    label: string;
+    value: string;
+  }[];
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
-      <Link href="/volunteer" className="text-sm text-blue-700 hover:underline">
-        ← Back to volunteer
-      </Link>
-
-      {/* Title row */}
-      <div className="mt-4 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{career.title}</h1>
-          {career.subTitle && (
-            <h2 className="text-lg italic text-gray-700 mt-1">{career.subTitle}</h2>
-          )}
-        </div>
-
-        {/* Active badge (if present) */}
-        {typeof career.active === "boolean" && (
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-              career.active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
-            }`}
-            aria-label={career.active ? "Position is active" : "Position is inactive"}
-            title={career.active ? "Position is active" : "Position is inactive"}
+    <main className="bg-[#f5f3ed] text-[#1b1d19]">
+      <section className="border-b border-[#dcdcd3] py-16 sm:py-20 lg:py-24">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <Link
+            href="/volunteer"
+            className="inline-flex items-center gap-2 text-sm text-[#6c7067] underline-offset-4 hover:text-[#1b1d19] hover:underline"
           >
-            {career.active ? "Active" : "Inactive"}
-          </span>
-        )}
-      </div>
+            ← Back to opportunities
+          </Link>
 
-      {/* Meta details */}
-      <div className="mt-6 grid gap-2 text-gray-700">
-        {career.department && (
-          <p>
-            <strong>Department:</strong> {career.department}
-          </p>
-        )}
-        {career.location && (
-          <p>
-            <strong>Location:</strong> {career.location}
-          </p>
-        )}
-        {career.employmentType && (
-          <p>
-            <strong>Employment Type:</strong> {career.employmentType}
-          </p>
-        )}
-        {career.salaryRange && (
-          <p>
-            <strong>Compensation:</strong> {career.salaryRange}
-          </p>
-        )}
-        {postedAt && (
-          <p>
-            <strong>Posted:</strong> {postedAt}
-          </p>
-        )}
-      </div>
+          <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.6fr)] lg:items-end">
+            <div>
+              <div className="mb-6 flex flex-wrap items-center gap-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+                  Volunteer opportunity
+                </p>
 
-      {/* Position description */}
-      {career.positionDetails && (
-        <div className="prose max-w-none mt-6 text-gray-900">
-          {career.positionDetails}
+                {typeof career.active ===
+                  "boolean" && (
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                      career.active
+                        ? "border-[#9ca88a] bg-[#e4e8dc] text-[#526040]"
+                        : "border-[#d0d0c9] bg-[#e9e8e3] text-[#777972]"
+                    }`}
+                  >
+                    {career.active
+                      ? "Open"
+                      : "Closed"}
+                  </span>
+                )}
+              </div>
+
+              <h1 className="max-w-4xl font-serif text-[clamp(3.5rem,7vw,6.5rem)] font-normal leading-[0.95] tracking-[-0.055em]">
+                {career.title}
+              </h1>
+
+              {career.subTitle && (
+                <p className="mt-8 max-w-2xl text-xl leading-8 text-[#6c7067]">
+                  {career.subTitle}
+                </p>
+              )}
+            </div>
+
+            {meta.length > 0 && (
+              <dl className="border-t border-[#dcdcd3]">
+                {meta.map(
+                  (item) => (
+                    <div
+                      key={
+                        item.label
+                      }
+                      className="grid grid-cols-[110px_1fr] gap-4 border-b border-[#dcdcd3] py-4 text-sm"
+                    >
+                      <dt className="text-[#8c8f86]">
+                        {
+                          item.label
+                        }
+                      </dt>
+
+                      <dd className="m-0 text-[#1b1d19]">
+                        {
+                          item.value
+                        }
+                      </dd>
+                    </div>
+                  )
+                )}
+              </dl>
+            )}
+          </div>
         </div>
-      )}
+      </section>
 
-      {/* Lists */}
-      <div className="mt-8 grid gap-6">
-        {career.requirements?.length ? (
-          <section>
-            <h3 className="text-xl font-semibold">Requirements</h3>
-            <ul className="mt-2 list-disc ml-6 space-y-1">
-              {career.requirements.map((item, i) => (
-                <li key={`req-${i}`}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+      <section className="py-20 sm:py-24 lg:py-28">
+        <div className="mx-auto grid w-full max-w-7xl gap-16 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-12">
+          <article className="max-w-3xl">
+            {career.positionDetails && (
+              <section className="border-b border-[#dcdcd3] pb-16">
+                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+                  The opportunity
+                </p>
 
-        {career.responsibilities?.length ? (
-          <section>
-            <h3 className="text-xl font-semibold">Responsibilities</h3>
-            <ul className="mt-2 list-disc ml-6 space-y-1">
-              {career.responsibilities.map((item, i) => (
-                <li key={`resp-${i}`}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+                <div className="whitespace-pre-line text-lg leading-8 text-[#4f534c]">
+                  {
+                    career.positionDetails
+                  }
+                </div>
+              </section>
+            )}
 
-        {career.benefits?.length ? (
-          <section>
-            <h3 className="text-xl font-semibold">Benefits</h3>
-            <ul className="mt-2 list-disc ml-6 space-y-1">
-              {career.benefits.map((item, i) => (
-                <li key={`ben-${i}`}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </div>
+            {career
+              .responsibilities
+              ?.length ? (
+              <section className="border-b border-[#dcdcd3] py-16">
+                <h2 className="font-serif text-4xl font-normal tracking-[-0.04em]">
+                  Responsibilities
+                </h2>
 
-      {/* Apply button */}
-      <div className="mt-10">
-        <Link
-          href={`/volunteer/${career.id}/apply`}
-          className="inline-block bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition"
-        >
-          Apply
-        </Link>
-      </div>
-      <Footer />
-    </div>
+                <ul className="mt-8 space-y-5">
+                  {career.responsibilities.map(
+                    (
+                      item,
+                      index
+                    ) => (
+                      <li
+                        key={`resp-${index}`}
+                        className="grid grid-cols-[24px_1fr] gap-4 leading-7 text-[#5d6159]"
+                      >
+                        <span className="text-[#657052]">
+                          —
+                        </span>
+
+                        <span>
+                          {
+                            item
+                          }
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </section>
+            ) : null}
+
+            {career
+              .requirements
+              ?.length ? (
+              <section className="border-b border-[#dcdcd3] py-16">
+                <h2 className="font-serif text-4xl font-normal tracking-[-0.04em]">
+                  What we&apos;re looking for
+                </h2>
+
+                <ul className="mt-8 space-y-5">
+                  {career.requirements.map(
+                    (
+                      item,
+                      index
+                    ) => (
+                      <li
+                        key={`req-${index}`}
+                        className="grid grid-cols-[24px_1fr] gap-4 leading-7 text-[#5d6159]"
+                      >
+                        <span className="text-[#657052]">
+                          —
+                        </span>
+
+                        <span>
+                          {
+                            item
+                          }
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </section>
+            ) : null}
+
+            {career
+              .benefits
+              ?.length ? (
+              <section className="py-16">
+                <h2 className="font-serif text-4xl font-normal tracking-[-0.04em]">
+                  What you&apos;ll gain
+                </h2>
+
+                <ul className="mt-8 space-y-5">
+                  {career.benefits.map(
+                    (
+                      item,
+                      index
+                    ) => (
+                      <li
+                        key={`ben-${index}`}
+                        className="grid grid-cols-[24px_1fr] gap-4 leading-7 text-[#5d6159]"
+                      >
+                        <span className="text-[#657052]">
+                          —
+                        </span>
+
+                        <span>
+                          {
+                            item
+                          }
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </section>
+            ) : null}
+          </article>
+
+          <aside className="lg:sticky lg:top-32 lg:self-start">
+            <div className="bg-[#20241e] p-7 text-[#f7f6f1]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#abb69a]">
+                Interested?
+              </p>
+
+              <h2 className="mt-5 font-serif text-3xl font-normal tracking-[-0.035em]">
+                Join the work.
+              </h2>
+
+              <p className="mt-4 text-sm leading-6 text-white/60">
+                Tell us a little
+                about yourself and
+                how you would like
+                to contribute.
+              </p>
+
+              {career.active !==
+              false ? (
+                <Link
+                  href={`/volunteer/${career.id}/apply`}
+                  className="mt-7 flex min-h-12 items-center justify-between bg-[#f7f6f1] px-5 text-sm font-semibold text-[#20241e]"
+                >
+                  Apply
+
+                  <span aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+              ) : (
+                <p className="mt-7 border-t border-white/10 pt-5 text-sm text-white/50">
+                  This opportunity
+                  is no longer
+                  accepting
+                  applications.
+                </p>
+              )}
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
   );
 }

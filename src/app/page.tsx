@@ -1,196 +1,228 @@
-"use client";
-import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
-import Footer from "@/components/Footer";
+import Link from "next/link";
 
-type TrustVersePayload = {
-  verse?: string;
-  text?: string;
-  passage?: string;
-  message?: string;
-  reference?: string;
-  ref?: string;
-  [key: string]: unknown;
-};
+import Members from "@/components/Members";
+import NewsletterForm from "@/components/NewsletterForm";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function getString(obj: Record<string, unknown>, key: string): string | undefined {
-  const v = obj[key];
-  return typeof v === "string" ? v : undefined;
-}
-
-function extractVerse(payload: TrustVersePayload): { text: string; reference?: string } {
-  if (!isRecord(payload)) return { text: "" };
-  const text =
-    getString(payload, "verse") ||
-    getString(payload, "text") ||
-    getString(payload, "passage") ||
-    getString(payload, "message") ||
-    "";
-  const reference = getString(payload, "reference") || getString(payload, "ref") || undefined;
-  return { text, reference };
-}
+const principles = [
+  {
+    number: "01",
+    title: "Connect",
+    description:
+      "Build meaningful relationships with believers who want to live their faith beyond Sunday.",
+  },
+  {
+    number: "02",
+    title: "Serve",
+    description:
+      "Give your time, resources, skills, and love where they can make a real difference.",
+  },
+  {
+    number: "03",
+    title: "Encourage",
+    description:
+      "Strengthen one another toward love, good works, and a life centered on Christ.",
+  },
+];
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<null | "loading" | "success" | "error">(null);
-  const [count, setCount] = useState<number | null>(null);
-  const [loadingCount, setLoadingCount] = useState(false);
-
-  const [verseText, setVerseText] = useState<string>("");
-  const [verseRef, setVerseRef] = useState<string | undefined>(undefined);
-  const [loadingVerse, setLoadingVerse] = useState<boolean>(false);
-  const [verseError, setVerseError] = useState<string | null>(null);
-
-  const fetchCount = useCallback(async () => {
-    try {
-      setLoadingCount(true);
-      const res = await fetch(`/api/subscribers/count`, { method: "GET" });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Count failed (HTTP ${res.status}) – ${text}`);
-      }
-      const data = (await res.json()) as { totalSubscribers: number };
-      setCount(typeof data.totalSubscribers === "number" ? data.totalSubscribers : null);
-    } catch (err) {
-      console.error(err);
-      setCount(null);
-    } finally {
-      setLoadingCount(false);
-    }
-  }, []);
-
-  const fetchVerse = useCallback(async () => {
-    try {
-      setLoadingVerse(true);
-      setVerseError(null);
-      const res = await fetch(`/api/trust-verse`, {
-        method: "GET",
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Verse request failed (HTTP ${res.status}) – ${body}`);
-      }
-      const payload = (await res.json()) as TrustVersePayload;
-      const { text, reference } = extractVerse(payload);
-      setVerseText(text);
-      setVerseRef(reference);
-    } catch (err) {
-      console.error(err);
-      const message = err instanceof Error ? err.message : "Failed to load verse";
-      setVerseError(message);
-      setVerseText("");
-      setVerseRef(undefined);
-    } finally {
-      setLoadingVerse(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCount();
-    fetchVerse();
-  }, [fetchCount, fetchVerse]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
-
-    try {
-      const res = await fetch("/api/subscribers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!res.ok) throw new Error("Request failed");
-
-      setStatus("success");
-      setEmail("");
-
-      await fetchCount();
-    } catch (err) {
-      console.error(err);
-      setStatus("error");
-    }
-  };
-
   return (
-    <div className="font-sans grid min-h-screen grid-rows-[auto_1fr_auto] items-center justify-items-center px-8 pt-6 pb-10 sm:px-10 sm:pt-10 sm:pb-12">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start w-full max-w-[500px]">
-        <div className="flex justify-center w-full">
-          <Image src="/logo.png" alt="Homepage logo" width={150} height={150} priority />
-        </div>
+    <main className="overflow-hidden bg-[#f5f3ed] text-[#1b1d19]">
+      {/* Hero */}
+      <section className="py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="grid gap-16 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.65fr)] lg:items-end lg:gap-24">
+            <div>
+              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+                Trust Church
+              </p>
 
-        {/* Trust Verse Card */}
-        <section className="w-full rounded-2xl border p-4 sm:p-6 shadow-sm">
-          <div className="mb-3">
-            <h2 className="text-base sm:text-lg font-semibold tracking-tight">Trust Verse</h2>
+              <h1 className="max-w-5xl font-serif text-[clamp(3.75rem,8vw,7.25rem)] font-normal leading-[0.91] tracking-[-0.055em]">
+                Love God.
+                <br />
+                Love people.
+                <br />
+                <span className="italic text-[#657052]">
+                  Live it out.
+                </span>
+              </h1>
+
+              <p className="mt-9 max-w-xl text-lg leading-8 tracking-[-0.015em] text-[#6c7067] sm:text-xl">
+                A community of believers connecting, serving, and putting
+                faith into action wherever there is a need.
+              </p>
+
+              <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-8">
+                <Link
+                  href="/about"
+                  className="inline-flex min-h-12 items-center justify-between gap-8 bg-[#1b1d19] px-5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+                >
+                  Our mission
+                  <span aria-hidden="true">→</span>
+                </Link>
+
+                <Link
+                  href="/volunteer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#1b1d19] underline-offset-4 hover:underline"
+                >
+                  Find a way to serve
+                  <span aria-hidden="true">↗</span>
+                </Link>
+              </div>
+            </div>
+
+            <aside className="border-t border-[#dcdcd3] pt-7">
+              <div className="mb-9 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#6c7067]">
+                <span className="h-[7px] w-[7px] rounded-full bg-[#657052]" />
+
+                <span>Trust Verse</span>
+              </div>
+
+              <blockquote className="font-serif text-2xl leading-snug tracking-[-0.025em] sm:text-3xl">
+                “Blessed is the one who trusts in the Lord, whose confidence is
+                in him.”
+              </blockquote>
+
+              <p className="mt-6 text-sm text-[#6c7067]">
+                Jeremiah 17:7
+              </p>
+            </aside>
           </div>
-          {verseError ? (
-            <p className="text-sm text-red-600">{verseError}</p>
-          ) : loadingVerse && !verseText ? (
-            <p className="text-sm text-gray-500">Loading verse…</p>
-          ) : verseText ? (
-            <blockquote className="text-sm sm:text-base leading-relaxed">
-              <p className="italic">“{verseText}”</p>
-              {verseRef && <cite className="not-italic block mt-2 text-xs sm:text-sm text-gray-600">— {verseRef}</cite>}
-            </blockquote>
-          ) : (
-            <p className="text-sm text-gray-500">No verse available right now.</p>
-          )}
-        </section>
-
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="tracking-[-.01em]">Find God&apos;s Community</li>
-          <li className="mb-2 tracking-[-.01em]">Join our email list for upcoming apps and news</li>
-        </ol>
-
-        <form onSubmit={handleSubmit} className="flex gap-4 items-center flex-col sm:flex-row w-full">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="Enter your email"
-            className="rounded-md border px-4 py-2 text-sm sm:text-base w-full sm:w-64"
-          />
-          <button
-            type="submit"
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            disabled={status === "loading"}
-          >
-            Submit
-          </button>
-        </form>
-
-        {status === "loading" && <p className="text-sm text-gray-500">Submitting...</p>}
-        {status === "success" && (
-          <>
-            <p className="text-sm text-green-600">Welcome to God’s community!</p>
-            <p className="text-sm text-gray-500">
-              You’re now part of something bigger — welcome to Trust Church!
-              <br />
-              Keep an eye on your inbox for ways to help grow God’s community.
-            </p>
-          </>
-        )}
-        {status === "error" && <p className="text-sm text-red-600">Something went wrong.</p>}
-
-        <div className="text-lg text-gray-700">
-          {loadingCount ? "Loading member count" : `Members: ${count ?? "—"}`}
         </div>
+      </section>
 
-          
-      </main>
+      {/* Purpose */}
+      <section className="border-t border-[#dcdcd3] bg-[#fbfaf6] py-24 sm:py-28 lg:py-32">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="grid gap-8 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-20">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+              Our purpose
+            </p>
 
-        <Footer />
+            <div>
+              <h2 className="max-w-5xl font-serif text-[clamp(2.7rem,5vw,5rem)] font-normal leading-[1.04] tracking-[-0.045em]">
+                Faith was never meant to remain inside the walls of a church.
+              </h2>
 
+              <p className="mt-10 max-w-2xl text-lg leading-8 text-[#6c7067]">
+                Trust Church exists to unite believers around a simple mission:
+                love God deeply and love people practically. We want to help
+                Christians turn conviction into action in their communities.
+              </p>
 
-    </div>
+              <Link
+                href="/about"
+                className="mt-7 inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline"
+              >
+                More about Trust Church
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* God's Community */}
+      <Members />
+
+      {/* Principles */}
+      <section className="border-t border-[#dcdcd3] py-24 sm:py-28 lg:py-32">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="mb-16 max-w-3xl lg:mb-20">
+            <p className="mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+              How we live it
+            </p>
+
+            <h2 className="font-serif text-[clamp(2.7rem,4.5vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.04em]">
+              Simple principles.
+              <br />
+              Meaningful action.
+            </h2>
+          </div>
+
+          <div className="grid border-t border-[#dcdcd3] lg:grid-cols-3">
+            {principles.map((principle, index) => (
+              <article
+                key={principle.title}
+                className={[
+                  "flex min-h-[280px] flex-col justify-between py-8 lg:min-h-[320px] lg:pr-10",
+                  index > 0
+                    ? "border-t border-[#dcdcd3] lg:border-l lg:border-t-0 lg:pl-10"
+                    : "",
+                ].join(" ")}
+              >
+                <span className="mb-14 font-mono text-xs text-[#6c7067] lg:mb-0">
+                  {principle.number}
+                </span>
+
+                <div>
+                  <h3 className="font-serif text-4xl font-normal tracking-[-0.035em]">
+                    {principle.title}
+                  </h3>
+
+                  <p className="mt-4 max-w-xs text-[15px] leading-7 text-[#6c7067]">
+                    {principle.description}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Service */}
+      <section className="pb-24 sm:pb-28 lg:pb-32">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="grid min-h-[560px] gap-20 bg-[#20241e] px-6 py-10 text-[#f7f6f1] sm:px-10 sm:py-12 lg:grid-cols-[0.55fr_1.45fr] lg:items-end lg:px-16 lg:py-16">
+            <p className="self-start text-xs font-semibold uppercase tracking-[0.14em] text-[#abb69a]">
+              Beyond Sunday
+            </p>
+
+            <div className="max-w-3xl">
+              <h2 className="font-serif text-[clamp(3rem,5vw,5.25rem)] font-normal leading-[0.98] tracking-[-0.045em]">
+                Meet people where the need is.
+              </h2>
+
+              <p className="mt-8 max-w-xl text-lg leading-8 text-white/60">
+                In neighborhoods, schools, hospitals, homes, and communities,
+                we believe faith should be visible through generosity,
+                compassion, service, and good works.
+              </p>
+
+              <Link
+                href="/volunteer"
+                className="mt-8 inline-flex min-h-12 items-center gap-8 bg-[#f7f6f1] px-5 text-sm font-semibold text-[#20241e] transition-transform hover:-translate-y-0.5"
+              >
+                Find a way to serve
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="border-t border-[#dcdcd3] py-24 sm:py-28 lg:py-32">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="grid gap-16 lg:grid-cols-[1fr_0.8fr] lg:items-end lg:gap-28">
+            <div>
+              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-[#657052]">
+                Stay connected
+              </p>
+
+              <h2 className="font-serif text-[clamp(3rem,5vw,5rem)] font-normal tracking-[-0.045em]">
+                Join God&apos;s community.
+              </h2>
+
+              <p className="mt-6 max-w-xl text-lg leading-8 text-[#6c7067]">
+                Stay connected with Trust Church and hear about new projects,
+                opportunities to serve, and ways to grow together in faith.
+              </p>
+            </div>
+
+            <NewsletterForm />
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
