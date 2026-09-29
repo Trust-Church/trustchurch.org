@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import Members from "@/components/Members";
+import TrustVerse from "@/components/TrustVerse";
 import NewsletterForm from "@/components/NewsletterForm";
+import SubscribeCallout from "@/components/SubscribeCallout";
 
 const principles = [
   {
@@ -69,26 +71,14 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+            <TrustVerse />
 
-            <aside className="border-t border-[#dcdcd3] pt-7">
-              <div className="mb-9 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#6c7067]">
-                <span className="h-[7px] w-[7px] rounded-full bg-[#657052]" />
 
-                <span>Trust Verse</span>
-              </div>
-
-              <blockquote className="font-serif text-2xl leading-snug tracking-[-0.025em] sm:text-3xl">
-                “Blessed is the one who trusts in the Lord, whose confidence is
-                in him.”
-              </blockquote>
-
-              <p className="mt-6 text-sm text-[#6c7067]">
-                Jeremiah 17:7
-              </p>
-            </aside>
           </div>
         </div>
       </section>
+
+      <SubscribeCallout />
 
       {/* Purpose */}
       <section className="border-t border-[#dcdcd3] bg-[#fbfaf6] py-24 sm:py-28 lg:py-32">
