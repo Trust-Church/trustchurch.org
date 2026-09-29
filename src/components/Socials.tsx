@@ -1,11 +1,6 @@
-import { FaXTwitter, FaInstagram, FaGithub, FaWater } from "react-icons/fa6";
+import { FaXTwitter, FaGithub, FaWater } from "react-icons/fa6";
 
 const socials = [
-  {
-    name: "Instagram",
-    href: "https://instagram.com/trust_church",
-    Icon: FaInstagram,
-  },
   {
     name: "GitHub",
     href: "https://github.com/trust-church",
