@@ -48,6 +48,15 @@ function getMessageStream(): string {
   return process.env.POSTMARK_MESSAGE_STREAM?.trim() || "outbound";
 }
 
+const TRUST_CHURCH_COPY_EMAIL = "welcome@trustchurch.org";
+
+function getCopyRecipient(primaryRecipient: string): string | undefined {
+  const primary = normalizeEmail(primaryRecipient);
+  const copy = normalizeEmail(TRUST_CHURCH_COPY_EMAIL);
+
+  return primary === copy ? undefined : copy;
+}
+
 /**
  * Normalize an email address.
  */
@@ -218,58 +227,65 @@ function assertPostmarkSuccess(
  */
 export async function sendWelcomeEmail(to: string) {
   const recipient = validateRecipientEmail(to);
+  const copyRecipient = getCopyRecipient(recipient);
 
   try {
     const result = await getClient().sendEmail({
       From: getFromEmail(),
       To: recipient,
-      Subject: "Welcome to Trust Church!",
+      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
+      Subject: "Welcome to Trust Church",
 
       HtmlBody: `
-        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
-          <h1 style="color:#2c3e50;">Welcome to Trust Church!</h1>
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h1 style="color:#2c3e50;">Welcome to Trust Church</h1>
 
-          <p>We’re so glad you’re here.</p>
+          <p>We are glad you are here.</p>
 
           <p>
-            This is more than just a community—it’s a family rooted in God,
-            strengthened by faith, and dedicated to good works and goodwill
-            toward all. Here, you’ll find encouragement, purpose, and a place
-            to grow alongside others who share the same heart for service
-            and connection.
+            Trust Church is a community of believers learning to love God,
+            love people, and live out our faith through connection, service,
+            encouragement, and action.
           </p>
 
           <p>
-            Our mission is simple: to walk in love, build each other up, and
-            shine light into the world through faith and action. Together,
-            we can make a difference.
+            Our goal is simple: help believers grow in faith, build meaningful
+            relationships, serve others with what God has given them, and
+            encourage one another to live for Christ beyond Sunday.
           </p>
 
           <p>
-            Thank you for joining us on this journey. We can’t wait to walk
-            alongside you in faith and fellowship.
+            As Trust Church grows, we hope you will find practical ways to
+            connect, serve, encourage others, and take part in what God is
+            building through this community.
           </p>
 
           <p style="margin-top: 2em;">
-            With gratitude and hope,<br />
+            Welcome to the community,<br />
             Trust Church
+          </p>
+
+          <p style="font-size:13px; color:#777; margin-top:2em;">
+            Love God. Love people. Live it out.
           </p>
         </div>
       `,
 
       TextBody: `
-Welcome to Trust Church!
+Welcome to Trust Church
 
-We’re so glad you’re here.
+We are glad you are here.
 
-This is more than just a community; it’s a family rooted in God, strengthened by faith, and dedicated to good works and goodwill toward all. Here, you’ll find encouragement, purpose, and a place to grow alongside others who share the same heart for service and connection.
+Trust Church is a community of believers learning to love God, love people, and live out our faith through connection, service, encouragement, and action.
 
-Our mission is simple: to walk in love, build each other up, and shine light into the world through faith and action. Together, we can make a difference.
+Our goal is simple: help believers grow in faith, build meaningful relationships, serve others with what God has given them, and encourage one another to live for Christ beyond Sunday.
 
-Thank you for joining us on this journey. We can’t wait to walk alongside you in faith and fellowship.
+As Trust Church grows, we hope you will find practical ways to connect, serve, encourage others, and take part in what God is building through this community.
 
-With gratitude and hope,
+Welcome to the community,
 Trust Church
+
+Love God. Love people. Live it out.
       `,
 
       MessageStream: getMessageStream(),
@@ -311,7 +327,7 @@ export async function sendVolunteerApplicationReceipt({
   jobId?: string;
 }) {
   const recipient = validateRecipientEmail(to);
-
+  const copyRecipient = getCopyRecipient(recipient);
   const safeFirstName = escapeHtml(firstName);
 
   const opportunityText = jobTitle
@@ -326,26 +342,31 @@ export async function sendVolunteerApplicationReceipt({
     const result = await getClient().sendEmail({
       From: getFromEmail(),
       To: recipient,
-      Subject: "Thank you for volunteering with Trust Church!",
+      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
+      Subject: "We received your Trust Church volunteer application",
 
       HtmlBody: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <h1 style="color:#2c3e50;">
-            Thank You, ${safeFirstName}!
-          </h1>
+          <h1 style="color:#2c3e50;">Thank you for being willing to serve, ${safeFirstName}</h1>
 
           <p>
-            We have received your volunteer application ${opportunityText}.
+            We received your volunteer application ${opportunityText}.
           </p>
 
           <p>
-            Thank you for your willingness to serve and be part of what God
-            is doing through Trust Church.
+            Trust Church exists to help believers connect, serve, encourage one
+            another, and put faith into action. Your willingness to offer your
+            time and skills is part of that mission.
           </p>
 
           <p>
             Our team will review your application and reach out if we need
-            any additional information or would like to discuss next steps.
+            additional information or would like to discuss next steps.
+          </p>
+
+          <p>
+            Thank you for taking a step toward serving with the Trust Church
+            community.
           </p>
 
           ${
@@ -362,17 +383,23 @@ export async function sendVolunteerApplicationReceipt({
             With gratitude,<br />
             Trust Church
           </p>
+
+          <p style="font-size:13px; color:#777; margin-top:2em;">
+            Love God. Love people. Live it out.
+          </p>
         </div>
       `,
 
       TextBody: `
-Thank You, ${firstName}!
+Thank you for being willing to serve, ${firstName}
 
-We have received your volunteer application ${opportunityTextPlain}.
+We received your volunteer application ${opportunityTextPlain}.
 
-Thank you for your willingness to serve and be part of what God is doing through Trust Church.
+Trust Church exists to help believers connect, serve, encourage one another, and put faith into action. Your willingness to offer your time and skills is part of that mission.
 
-Our team will review your application and reach out if we need any additional information or would like to discuss next steps.
+Our team will review your application and reach out if we need additional information or would like to discuss next steps.
+
+Thank you for taking a step toward serving with the Trust Church community.
 
 ${
   jobId
@@ -382,13 +409,14 @@ ${
 
 With gratitude,
 Trust Church
+
+Love God. Love people. Live it out.
       `,
 
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
-
 
     return accepted;
   } catch (error) {
@@ -442,6 +470,7 @@ export async function notifyAdminOfVolunteer({
   }
 
   const recipient = validateRecipientEmail(adminEmail);
+  const copyRecipient = getCopyRecipient(recipient);
 
   const fullName = [
     applicant.firstName,
@@ -479,6 +508,7 @@ export async function notifyAdminOfVolunteer({
     const result = await getClient().sendEmail({
       From: getFromEmail(),
       To: recipient,
+      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
       Subject: `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`,
 
       HtmlBody: `
@@ -488,8 +518,12 @@ export async function notifyAdminOfVolunteer({
           </h1>
 
           <p>
-            A new volunteer application has been submitted through
-            the Trust Church website.
+            A new volunteer application has been submitted by someone interested
+            in serving the Trust Church mission.
+          </p>
+
+          <p>
+            Please review the applicant details below and follow up as appropriate.
           </p>
 
           <hr />
@@ -552,7 +586,9 @@ export async function notifyAdminOfVolunteer({
       TextBody: `
 New Volunteer Application
 
-A new volunteer application has been submitted through the Trust Church website.
+A new volunteer application has been submitted by someone interested in serving the Trust Church mission.
+
+Please review the applicant details below and follow up as appropriate.
 
 APPLICANT
 Name: ${fullName}
