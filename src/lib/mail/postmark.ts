@@ -50,11 +50,42 @@ function getMessageStream(): string {
 
 const TRUST_CHURCH_COPY_EMAIL = "welcome@trustchurch.org";
 
-function getCopyRecipient(primaryRecipient: string): string | undefined {
-  const primary = normalizeEmail(primaryRecipient);
-  const copy = normalizeEmail(TRUST_CHURCH_COPY_EMAIL);
+async function sendInternalCopy({
+  originalRecipient,
+  subject,
+  htmlBody,
+  textBody,
+}: {
+  originalRecipient: string;
+  subject: string;
+  htmlBody: string;
+  textBody: string;
+}) {
+  const copyRecipient = validateRecipientEmail(TRUST_CHURCH_COPY_EMAIL);
 
-  return primary === copy ? undefined : copy;
+  if (normalizeEmail(originalRecipient) === copyRecipient) {
+    return;
+  }
+
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: copyRecipient,
+      Subject: `[Copy] ${subject}`,
+      HtmlBody: htmlBody,
+      TextBody: textBody,
+      MessageStream: getMessageStream(),
+    });
+
+    assertPostmarkSuccess(result, copyRecipient);
+  } catch (error) {
+    console.error("[Postmark] Internal copy failed:", {
+      to: copyRecipient,
+      originalRecipient,
+      subject,
+      error,
+    });
+  }
 }
 
 /**
@@ -227,16 +258,8 @@ function assertPostmarkSuccess(
  */
 export async function sendWelcomeEmail(to: string) {
   const recipient = validateRecipientEmail(to);
-  const copyRecipient = getCopyRecipient(recipient);
-
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
-      Subject: "Welcome to Trust Church",
-
-      HtmlBody: `
+  const subject = "Welcome to Trust Church";
+  const htmlBody = `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color:#2c3e50;">Welcome to Trust Church</h1>
 
@@ -269,9 +292,9 @@ export async function sendWelcomeEmail(to: string) {
             Love God. Love people. Live it out.
           </p>
         </div>
-      `,
+      `;
 
-      TextBody: `
+  const textBody = `
 Welcome to Trust Church
 
 We are glad you are here.
@@ -286,12 +309,27 @@ Welcome to the community,
 Trust Church
 
 Love God. Love people. Live it out.
-      `,
+      `;
 
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: subject,
+      HtmlBody: htmlBody,
+      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
+
+    await sendInternalCopy({
+      originalRecipient: recipient,
+      subject,
+      htmlBody,
+      textBody,
+    });
+
     return accepted;
   } catch (error) {
     if (error instanceof InactiveRecipientError) {
@@ -327,7 +365,6 @@ export async function sendVolunteerApplicationReceipt({
   jobId?: string;
 }) {
   const recipient = validateRecipientEmail(to);
-  const copyRecipient = getCopyRecipient(recipient);
   const safeFirstName = escapeHtml(firstName);
 
   const opportunityText = jobTitle
@@ -338,14 +375,8 @@ export async function sendVolunteerApplicationReceipt({
     ? `for the "${jobTitle}" opportunity`
     : "for a volunteer opportunity";
 
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
-      Subject: "We received your Trust Church volunteer application",
-
-      HtmlBody: `
+  const subject = "We received your Trust Church volunteer application";
+  const htmlBody = `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color:#2c3e50;">Thank you for being willing to serve, ${safeFirstName}</h1>
 
@@ -388,9 +419,9 @@ export async function sendVolunteerApplicationReceipt({
             Love God. Love people. Live it out.
           </p>
         </div>
-      `,
+      `;
 
-      TextBody: `
+  const textBody = `
 Thank you for being willing to serve, ${firstName}
 
 We received your volunteer application ${opportunityTextPlain}.
@@ -411,12 +442,26 @@ With gratitude,
 Trust Church
 
 Love God. Love people. Live it out.
-      `,
+      `;
 
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: subject,
+      HtmlBody: htmlBody,
+      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
+
+    await sendInternalCopy({
+      originalRecipient: recipient,
+      subject,
+      htmlBody,
+      textBody,
+    });
 
     return accepted;
   } catch (error) {
@@ -470,7 +515,6 @@ export async function notifyAdminOfVolunteer({
   }
 
   const recipient = validateRecipientEmail(adminEmail);
-  const copyRecipient = getCopyRecipient(recipient);
 
   const fullName = [
     applicant.firstName,
@@ -504,14 +548,8 @@ export async function notifyAdminOfVolunteer({
           .join("\n")
       : "None provided";
 
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      ...(copyRecipient ? { Bcc: copyRecipient } : {}),
-      Subject: `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`,
-
-      HtmlBody: `
+  const subject = `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`;
+  const htmlBody = `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color:#2c3e50;">
             New Volunteer Application
@@ -581,9 +619,9 @@ export async function notifyAdminOfVolunteer({
             }
           </p>
         </div>
-      `,
+      `;
 
-      TextBody: `
+  const textBody = `
 New Volunteer Application
 
 A new volunteer application has been submitted by someone interested in serving the Trust Church mission.
@@ -614,13 +652,26 @@ ${applicant.id}
 
 SUBMITTED
 ${applicant.createdAt || "Unknown"}
-      `,
+      `;
 
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      Subject: subject,
+      HtmlBody: htmlBody,
+      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
 
+    await sendInternalCopy({
+      originalRecipient: recipient,
+      subject,
+      htmlBody,
+      textBody,
+    });
 
     return accepted;
   } catch (error) {
