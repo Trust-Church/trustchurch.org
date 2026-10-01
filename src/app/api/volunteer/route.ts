@@ -3,14 +3,24 @@ import { db } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
+type CareerDocument = {
+  id: string;
+  data: () => Record<string, unknown>;
+};
+
 export async function GET() {
   try {
-    const snapshot = await db.collection("careers").get();
+    const snapshot = await db
+      .collection("careers")
+      .where("active", "==", true)
+      .get();
 
-    const careers = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const careers = snapshot.docs.map(
+      (doc: CareerDocument) => ({
+        id: doc.id,
+        ...doc.data(),
+      })
+    );
 
     return NextResponse.json(
       { careers },
@@ -22,7 +32,10 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("Error getting volunteer opportunities:", error);
+    console.error(
+      "Error getting volunteer opportunities:",
+      error
+    );
 
     return NextResponse.json(
       { error: "Internal Server Error" },

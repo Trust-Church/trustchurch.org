@@ -4,7 +4,7 @@ The official website for [Trust Church](https://trustchurch.org).
 
 Trust Church is a community of believers focused on connecting, serving, and putting faith into action wherever there is a need.
 
-Our goal is simple: bring God's Kingdom together through community, service, encouragement, and digital tools that help believers make a positive impact in the world.
+Our goal is simple: **bring God's Kingdom together** through community, service, encouragement, and digital tools that help believers make a positive impact in the world.
 
 ## About
 
@@ -19,14 +19,41 @@ The website will continue to evolve as the Trust Church community and platform g
 
 ## Features
 
-- Responsive Trust Church website
-- Email community subscription
-- Public community member count
-- Volunteer opportunities
-- Volunteer applications
+### Community
+
+- Community email subscriptions
+- Live public community member count
 - Social links and community resources
-- Reusable site-wide navigation and components
-- API routes for subscriptions and application handling
+- Bible access directly from site navigation
+
+### Volunteer
+
+- Volunteer opportunity directory
+- Individual opportunity pages
+- Volunteer application forms
+- Applicant contact and social profile information
+- Resume and supporting document uploads
+- Application field validation
+- Social profile URL validation and normalization
+
+Supported social profiles include:
+
+- X / Twitter
+- GitHub
+- LinkedIn
+- Instagram
+
+Social fields accept common formats such as usernames, domain-based URLs, and HTTP/HTTPS URLs. Valid profiles are normalized to canonical HTTPS URLs before submission.
+
+### Website
+
+- Responsive mobile and desktop layouts
+- Shared navigation and footer
+- About and mission content
+- Reusable UI components
+- SEO metadata and structured data
+- Open Graph and social sharing metadata
+- Semantic and accessible page structure
 
 ## Tech Stack
 
@@ -54,7 +81,7 @@ npm install
 
 Configure the required environment variables for your local environment.
 
-Then start the development server:
+Start the development server:
 
 ```bash
 npm run dev
@@ -104,7 +131,7 @@ POST /api/subscribers
 
 Handles community email subscriptions.
 
-Example request:
+Example:
 
 ```json
 {
@@ -120,7 +147,7 @@ GET /api/subscribers/count
 
 Returns the current number of community subscribers.
 
-Example response:
+Example:
 
 ```json
 {
@@ -128,24 +155,33 @@ Example response:
 }
 ```
 
-Only the aggregate count is exposed publicly. Subscriber records and email addresses are not returned by this endpoint.
+Only the aggregate count is exposed publicly. Subscriber records and email addresses are not returned by the count endpoint.
+
+### Volunteer
+
+Volunteer API routes support retrieving opportunities and submitting applications.
+
+Application data is validated before processing, including contact information, supported social profiles, and uploaded files.
 
 ## Project Structure
 
 ```text
 .
-├── public/                 # Static assets
+├── public/                     # Static assets
+│
 ├── src/
-│   ├── app/                # Next.js App Router
-│   │   ├── api/            # Server-side route handlers
-│   │   ├── about/          # About Trust Church
-│   │   ├── volunteer/      # Volunteer opportunities and applications
-│   │   ├── globals.css     # Global styles
-│   │   ├── layout.tsx      # Root layout and metadata
-│   │   └── page.tsx        # Homepage
+│   ├── app/
+│   │   ├── api/                # Server-side route handlers
+│   │   ├── about/              # About Trust Church
+│   │   ├── volunteer/          # Opportunities and applications
+│   │   ├── globals.css         # Global styles
+│   │   ├── layout.tsx          # Root layout and metadata
+│   │   ├── page.tsx            # Homepage
+│   │   ├── robots.ts           # Search crawler configuration
+│   │   └── sitemap.ts          # XML sitemap generation
 │   │
-│   ├── components/         # Shared UI components
-│   └── lib/                # Shared utilities and server helpers
+│   ├── components/             # Shared UI components
+│   └── lib/                    # Shared utilities and server helpers
 │
 ├── next.config.ts
 ├── package.json
@@ -153,21 +189,54 @@ Only the aggregate count is exposed publicly. Subscriber records and email addre
 └── tsconfig.json
 ```
 
+## Security
+
+Trust Church handles user-submitted information through server-side API routes.
+
+Development should follow several basic principles:
+
+- Validate user input on both the client and server
+- Restrict accepted social profiles to supported platforms
+- Normalize accepted social profiles to HTTPS URLs
+- Validate uploaded files before processing
+- Never expose subscriber or applicant information through public endpoints
+- Keep Firebase credentials and other secrets out of source control
+- Store secrets using environment variables
+- Avoid trusting client-side validation as a security boundary
+
+## SEO
+
+The website includes support for:
+
+- Page-specific metadata
+- Search engine titles and descriptions
+- Canonical site information
+- Open Graph metadata
+- Social sharing metadata
+- Structured data
+- `robots.txt`
+- XML sitemap generation
+- Semantic HTML
+
 ## Development
 
 When contributing:
 
 - Keep components accessible and keyboard friendly
-- Validate user input on both the client and server
-- Never expose private subscriber or application data through public endpoints
-- Keep secrets and credentials out of source control
-- Prefer reusable components over duplicated UI
 - Maintain responsive behavior across mobile and desktop
+- Validate user-controlled data
+- Prefer reusable components over duplicated UI
+- Keep secrets and credentials out of source control
 - Keep pull requests focused and clearly documented
+- Run the production build before submitting changes
+
+```bash
+npm run build
+```
 
 ## Roadmap
 
-Trust Church is continuing to expand its digital tools, including:
+Trust Church will continue expanding its digital tools, including:
 
 - Expanded volunteer and service tools
 - Events and gatherings

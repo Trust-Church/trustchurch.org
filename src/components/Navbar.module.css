@@ -1,0 +1,279 @@
+.header {
+  --nav-background: rgba(247, 245, 239, 0.94);
+  --nav-foreground: #1b1d19;
+  --nav-muted: #74776f;
+  --nav-border: rgba(27, 29, 25, 0.12);
+  --nav-accent: #657052;
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--nav-border);
+  background: var(--nav-background);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.container {
+  width: min(100% - 48px, 1280px);
+  margin-inline: auto;
+}
+
+.inner {
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 32px;
+}
+
+.brand {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  color: var(--nav-foreground);
+  text-decoration: none;
+}
+
+.logo {
+  width: auto;
+  height: 42px;
+  object-fit: contain;
+}
+
+
+.mark {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--nav-foreground);
+  border-radius: 50%;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: 19px;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.brandText span:last-child {
+  color: var(--nav-muted);
+  font-weight: 450;
+}
+
+.desktopNav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.desktopNav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: var(--nav-muted);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+
+  transition: color 160ms ease;
+}
+
+.desktopNav a:hover,
+.desktopNav .active {
+  color: var(--nav-foreground);
+}
+
+.desktopNav .active::after {
+  content: "";
+
+  position: absolute;
+  right: 0;
+  bottom: -31px;
+  left: 0;
+
+  height: 1px;
+
+  background: var(--nav-accent);
+}
+
+.desktopSocials {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.menuButton {
+  display: none;
+}
+
+.mobileMenu {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  .inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .desktopNav,
+  .desktopSocials {
+    display: none;
+  }
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    padding: 0;
+    border: 0;
+
+    color: inherit;
+    background: transparent;
+
+    cursor: pointer;
+  }
+
+  .menuButton span {
+    width: 21px;
+    height: 1px;
+
+    display: block;
+
+    background: var(--nav-foreground);
+
+    transition:
+      transform 180ms ease,
+      opacity 180ms ease;
+  }
+
+  .mobileMenu {
+    max-height: 0;
+    overflow: hidden;
+
+    display: block;
+
+    opacity: 0;
+
+    transition:
+      max-height 240ms ease,
+      opacity 180ms ease;
+  }
+
+  .mobileMenuOpen {
+    max-height: 500px;
+    opacity: 1;
+  }
+
+  .mobileMenu nav {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0 24px;
+    border-top: 1px solid var(--nav-border);
+  }
+
+  .mobileMenu nav a {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 15px 0;
+
+    color: var(--nav-foreground);
+
+    font-family:
+      "Iowan Old Style",
+      "Palatino Linotype",
+      Georgia,
+      serif;
+
+    font-size: 28px;
+    text-decoration: none;
+    letter-spacing: -0.025em;
+  }
+
+  .mobileSocials {
+    padding: 8px 0 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(100% - 40px, 1280px);
+  }
+
+  .inner {
+    min-height: 72px;
+  }
+}
+
+.desktopNav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  color: var(--nav-muted);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+
+  transition:
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.navIcon {
+  opacity: 0.65;
+  object-fit: contain;
+}
+
+.desktopNav a:hover .navIcon,
+.desktopNav .active .navIcon {
+  opacity: 1;
+}
+
+.externalIcon {
+  margin-left: -3px;
+  opacity: 0.55;
+}
+
+.mobileNavLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobileNavIcon {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  object-fit: contain;
+}
+
+.mobileActive {
+  color: var(--nav-accent) !important;
+}
+
+.mobileActive .mobileNavIcon {
+  opacity: 1;
+}

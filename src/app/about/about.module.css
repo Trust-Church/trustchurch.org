@@ -1,0 +1,490 @@
+.page {
+  --background: #f5f3ed;
+  --surface: #fbfaf6;
+  --foreground: #1b1d19;
+  --muted: #6c7067;
+  --border: #dcdcd3;
+  --accent: #657052;
+  --dark: #20241e;
+
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.container {
+  width: min(100% - 48px, 1280px);
+  margin-inline: auto;
+}
+
+.eyebrow,
+.sectionLabel {
+  margin: 0 0 24px;
+
+  color: var(--accent);
+
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+
+/* Hero */
+
+.hero {
+  padding: 120px 0 132px;
+}
+
+.hero h1 {
+  max-width: 980px;
+  margin: 0;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: clamp(4rem, 8vw, 7.6rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+}
+
+.hero h1 span {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.heroCopy {
+  max-width: 580px;
+  margin: 48px 0 0;
+
+  color: var(--muted);
+
+  font-size: 20px;
+  line-height: 1.65;
+}
+
+
+/* Introduction */
+
+.introduction {
+  padding: 128px 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.4fr) minmax(0, 1.6fr);
+  gap: 90px;
+}
+
+.largeCopy {
+  max-width: 900px;
+}
+
+.largeCopy p {
+  margin: 0;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: clamp(2.25rem, 4vw, 4rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+.largeCopy p + p {
+  margin-top: 48px;
+}
+
+.largeCopy strong {
+  color: var(--accent);
+  font-weight: inherit;
+}
+
+
+/* Mission */
+
+.mission {
+  padding: 132px 0;
+  border-top: 1px solid var(--border);
+}
+
+.missionGrid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 110px;
+}
+
+.missionHeading h2 {
+  margin: 0;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: clamp(3rem, 5vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.missionCopy {
+  max-width: 630px;
+  padding-top: 42px;
+}
+
+.missionCopy p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.missionCopy p + p {
+  margin-top: 30px;
+}
+
+
+/* Values */
+
+.values {
+  padding: 132px 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.valuesHeader {
+  max-width: 700px;
+  margin-bottom: 76px;
+}
+
+.valuesHeader h2 {
+  margin: 0;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: clamp(2.8rem, 4.5vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  border-top: 1px solid var(--border);
+}
+
+.valueGrid article {
+  min-height: 300px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 28px 38px 0 0;
+}
+
+.valueGrid article + article {
+  padding-left: 38px;
+  border-left: 1px solid var(--border);
+}
+
+.valueGrid article > span {
+  color: var(--muted);
+
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.valueGrid h3 {
+  margin: 0 0 14px;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.valueGrid p {
+  max-width: 320px;
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+
+/* Callout */
+
+.callout {
+  padding: 132px 0;
+}
+
+.calloutInner {
+  min-height: 530px;
+
+  display: grid;
+  grid-template-columns: 0.45fr 1.55fr;
+  gap: 80px;
+
+  padding: 64px;
+
+  color: #f7f6f1;
+  background: var(--dark);
+}
+
+.calloutInner .sectionLabel {
+  color: #a9b598;
+}
+
+.calloutInner > div:last-child {
+  align-self: end;
+  max-width: 800px;
+}
+
+.callout h2 {
+  margin: 0;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: clamp(3rem, 5vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.callout p:not(.sectionLabel) {
+  max-width: 610px;
+  margin: 30px 0;
+
+  color: rgba(247, 246, 241, 0.67);
+
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.button {
+  width: max-content;
+  min-height: 50px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 32px;
+
+  padding: 0 20px;
+
+  color: var(--dark);
+  background: #f7f6f1;
+
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+
+  transition: transform 160ms ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* Footer */
+
+.footer {
+  color: #e8e9e4;
+  background: #191b18;
+}
+
+.footerTop {
+  min-height: 240px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  padding: 64px 0;
+}
+
+.footerBrand {
+  margin: 0 0 20px;
+
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    Georgia,
+    serif;
+
+  font-size: 30px;
+  letter-spacing: -0.035em;
+}
+
+.footerStatement {
+  margin: 0;
+
+  color: rgba(232, 233, 228, 0.55);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.footerBottom {
+  min-height: 88px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.footerBottom p {
+  margin: 0;
+
+  color: rgba(232, 233, 228, 0.4);
+
+  font-size: 12px;
+}
+
+.footerBottom nav {
+  display: flex;
+  gap: 26px;
+}
+
+.footerBottom a {
+  color: rgba(232, 233, 228, 0.65);
+
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.footerBottom a:hover {
+  color: #fff;
+}
+
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .twoColumn,
+  .missionGrid,
+  .calloutInner {
+    grid-template-columns: 1fr;
+  }
+
+  .twoColumn,
+  .missionGrid {
+    gap: 40px;
+  }
+
+  .missionCopy {
+    padding-top: 0;
+  }
+
+  .valueGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .valueGrid article {
+    min-height: auto;
+    padding: 32px 0 48px;
+  }
+
+  .valueGrid article + article {
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .valueGrid article > span {
+    margin-bottom: 64px;
+  }
+
+  .calloutInner {
+    min-height: 600px;
+    gap: 90px;
+    padding: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(100% - 40px, 1280px);
+  }
+
+  .hero {
+    padding: 82px 0 96px;
+  }
+
+  .hero h1 {
+    font-size: clamp(3.8rem, 18vw, 5.2rem);
+  }
+
+  .heroCopy {
+    margin-top: 34px;
+    font-size: 17px;
+  }
+
+  .introduction,
+  .mission,
+  .values,
+  .callout {
+    padding: 88px 0;
+  }
+
+  .largeCopy p {
+    font-size: 2.4rem;
+  }
+
+  .calloutInner {
+    margin-inline: -20px;
+    padding: 38px 20px;
+  }
+
+  .footerTop {
+    min-height: 220px;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  .footerBottom {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+
+    gap: 22px;
+    padding: 28px 0;
+  }
+
+  .footerBottom nav {
+    flex-wrap: wrap;
+    gap: 16px 24px;
+  }
+}
