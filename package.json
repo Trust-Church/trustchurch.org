@@ -1,6 +1,6 @@
 {
   "name": "trust-church",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "firebase-admin": "^14.3.0",
+    "firebase-admin": "14.3.0",
     "next": "15.5.7",
     "postmark": "^5.1.0",
     "react": "19.1.2",
