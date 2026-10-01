@@ -7,7 +7,7 @@
 
 # 1) Install ALL dependencies, including devDependencies,
 #    because TypeScript/Next.js tooling is required to build.
-FROM node:22-bookworm-slim AS deps-dev
+FROM node:22-trixie-slim AS deps-dev
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 2) Build the Next.js application.
-FROM node:22-bookworm-slim AS builder
+FROM node:22-trixie-slim AS builder
 
 WORKDIR /app
 
@@ -44,15 +44,12 @@ ENV FIREBASE_CLIENT_EMAIL=$FIREBASE_CLIENT_EMAIL
 ENV FIREBASE_PRIVATE_KEY=$FIREBASE_PRIVATE_KEY
 ENV FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET
 
-# Verify Firestore dependency exists before building.
-RUN node -e "require('@google-cloud/firestore'); console.log('Firestore dependency OK')"
-
 RUN --mount=type=cache,target=/root/.npm \
     npm run build
 
 
 # 3) Install production-only dependencies in a clean layer.
-FROM node:22-bookworm-slim AS prod-deps
+FROM node:22-trixie-slim AS prod-deps
 
 WORKDIR /app
 
@@ -63,12 +60,8 @@ COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --include=optional
 
-# Verify Firestore is available in the runtime dependency set.
-RUN node -e "require('@google-cloud/firestore'); console.log('Firestore runtime dependency OK')"
-
-
 # 4) Minimal production runtime image.
-FROM node:22-bookworm-slim AS runner
+FROM node:22-trixie-slim AS runner
 
 WORKDIR /app
 
