@@ -50,44 +50,6 @@ function getMessageStream(): string {
 
 const TRUST_CHURCH_COPY_EMAIL = "welcome@trustchurch.org";
 
-async function sendInternalCopy({
-  originalRecipient,
-  subject,
-  htmlBody,
-  textBody,
-}: {
-  originalRecipient: string;
-  subject: string;
-  htmlBody: string;
-  textBody: string;
-}) {
-  const copyRecipient = validateRecipientEmail(TRUST_CHURCH_COPY_EMAIL);
-
-  if (normalizeEmail(originalRecipient) === copyRecipient) {
-    return;
-  }
-
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: copyRecipient,
-      Subject: `[Copy] ${subject}`,
-      HtmlBody: htmlBody,
-      TextBody: textBody,
-      MessageStream: getMessageStream(),
-    });
-
-    assertPostmarkSuccess(result, copyRecipient);
-  } catch (error) {
-    console.error("[Postmark] Internal copy failed:", {
-      to: copyRecipient,
-      originalRecipient,
-      subject,
-      error,
-    });
-  }
-}
-
 /**
  * Normalize an email address.
  */
@@ -258,33 +220,41 @@ function assertPostmarkSuccess(
  */
 export async function sendWelcomeEmail(to: string) {
   const recipient = validateRecipientEmail(to);
-  const subject = "Welcome to Trust Church";
-  const htmlBody = `
+
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      ...(recipient !== TRUST_CHURCH_COPY_EMAIL
+        ? { Bcc: TRUST_CHURCH_COPY_EMAIL }
+        : {}),
+      Subject: "Welcome to Trust Church",
+
+      HtmlBody: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color:#2c3e50;">Welcome to Trust Church</h1>
 
           <p>We are glad you are here.</p>
 
           <p>
-            Trust Church is a community of believers learning to love God,
-            love people, and live out our faith through connection, service,
+            Trust Church is a community of believers committed to loving God,
+            loving people, and living out our faith through connection, service,
             encouragement, and action.
           </p>
 
           <p>
-            Our goal is simple: help believers grow in faith, build meaningful
+            Our mission is to help believers grow in faith, build meaningful
             relationships, serve others with what God has given them, and
             encourage one another to live for Christ beyond Sunday.
           </p>
 
           <p>
-            As Trust Church grows, we hope you will find practical ways to
-            connect, serve, encourage others, and take part in what God is
-            building through this community.
+            Thank you for joining the community. We look forward to growing,
+            serving, and walking in faith together.
           </p>
 
           <p style="margin-top: 2em;">
-            Welcome to the community,<br />
+            With gratitude,<br />
             Trust Church
           </p>
 
@@ -292,44 +262,29 @@ export async function sendWelcomeEmail(to: string) {
             Love God. Love people. Live it out.
           </p>
         </div>
-      `;
+      `,
 
-  const textBody = `
+      TextBody: `
 Welcome to Trust Church
 
 We are glad you are here.
 
-Trust Church is a community of believers learning to love God, love people, and live out our faith through connection, service, encouragement, and action.
+Trust Church is a community of believers committed to loving God, loving people, and living out our faith through connection, service, encouragement, and action.
 
-Our goal is simple: help believers grow in faith, build meaningful relationships, serve others with what God has given them, and encourage one another to live for Christ beyond Sunday.
+Our mission is to help believers grow in faith, build meaningful relationships, serve others with what God has given them, and encourage one another to live for Christ beyond Sunday.
 
-As Trust Church grows, we hope you will find practical ways to connect, serve, encourage others, and take part in what God is building through this community.
+Thank you for joining the community. We look forward to growing, serving, and walking in faith together.
 
-Welcome to the community,
+With gratitude,
 Trust Church
 
 Love God. Love people. Live it out.
-      `;
+      `,
 
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      Subject: subject,
-      HtmlBody: htmlBody,
-      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
-
-    await sendInternalCopy({
-      originalRecipient: recipient,
-      subject,
-      htmlBody,
-      textBody,
-    });
-
     return accepted;
   } catch (error) {
     if (error instanceof InactiveRecipientError) {
@@ -365,6 +320,7 @@ export async function sendVolunteerApplicationReceipt({
   jobId?: string;
 }) {
   const recipient = validateRecipientEmail(to);
+
   const safeFirstName = escapeHtml(firstName);
 
   const opportunityText = jobTitle
@@ -375,10 +331,20 @@ export async function sendVolunteerApplicationReceipt({
     ? `for the "${jobTitle}" opportunity`
     : "for a volunteer opportunity";
 
-  const subject = "We received your Trust Church volunteer application";
-  const htmlBody = `
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      ...(recipient !== TRUST_CHURCH_COPY_EMAIL
+        ? { Bcc: TRUST_CHURCH_COPY_EMAIL }
+        : {}),
+      Subject: "We received your Trust Church volunteer application",
+
+      HtmlBody: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <h1 style="color:#2c3e50;">Thank you for being willing to serve, ${safeFirstName}</h1>
+          <h1 style="color:#2c3e50;">
+            Thank you for being willing to serve, ${safeFirstName}
+          </h1>
 
           <p>
             We received your volunteer application ${opportunityText}.
@@ -393,11 +359,6 @@ export async function sendVolunteerApplicationReceipt({
           <p>
             Our team will review your application and reach out if we need
             additional information or would like to discuss next steps.
-          </p>
-
-          <p>
-            Thank you for taking a step toward serving with the Trust Church
-            community.
           </p>
 
           ${
@@ -419,9 +380,9 @@ export async function sendVolunteerApplicationReceipt({
             Love God. Love people. Live it out.
           </p>
         </div>
-      `;
+      `,
 
-  const textBody = `
+      TextBody: `
 Thank you for being willing to serve, ${firstName}
 
 We received your volunteer application ${opportunityTextPlain}.
@@ -429,8 +390,6 @@ We received your volunteer application ${opportunityTextPlain}.
 Trust Church exists to help believers connect, serve, encourage one another, and put faith into action. Your willingness to offer your time and skills is part of that mission.
 
 Our team will review your application and reach out if we need additional information or would like to discuss next steps.
-
-Thank you for taking a step toward serving with the Trust Church community.
 
 ${
   jobId
@@ -442,26 +401,12 @@ With gratitude,
 Trust Church
 
 Love God. Love people. Live it out.
-      `;
+      `,
 
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      Subject: subject,
-      HtmlBody: htmlBody,
-      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
-
-    await sendInternalCopy({
-      originalRecipient: recipient,
-      subject,
-      htmlBody,
-      textBody,
-    });
 
     return accepted;
   } catch (error) {
@@ -548,20 +493,24 @@ export async function notifyAdminOfVolunteer({
           .join("\n")
       : "None provided";
 
-  const subject = `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`;
-  const htmlBody = `
+  try {
+    const result = await getClient().sendEmail({
+      From: getFromEmail(),
+      To: recipient,
+      ...(recipient !== TRUST_CHURCH_COPY_EMAIL
+        ? { Bcc: TRUST_CHURCH_COPY_EMAIL }
+        : {}),
+      Subject: `New Volunteer Application${jobTitle ? ` - ${jobTitle}` : ""}`,
+
+      HtmlBody: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color:#2c3e50;">
             New Volunteer Application
           </h1>
 
           <p>
-            A new volunteer application has been submitted by someone interested
-            in serving the Trust Church mission.
-          </p>
-
-          <p>
-            Please review the applicant details below and follow up as appropriate.
+            Someone has submitted a volunteer application to serve with
+            Trust Church.
           </p>
 
           <hr />
@@ -619,14 +568,12 @@ export async function notifyAdminOfVolunteer({
             }
           </p>
         </div>
-      `;
+      `,
 
-  const textBody = `
+      TextBody: `
 New Volunteer Application
 
-A new volunteer application has been submitted by someone interested in serving the Trust Church mission.
-
-Please review the applicant details below and follow up as appropriate.
+Someone has submitted a volunteer application to serve with Trust Church.
 
 APPLICANT
 Name: ${fullName}
@@ -652,26 +599,13 @@ ${applicant.id}
 
 SUBMITTED
 ${applicant.createdAt || "Unknown"}
-      `;
+      `,
 
-  try {
-    const result = await getClient().sendEmail({
-      From: getFromEmail(),
-      To: recipient,
-      Subject: subject,
-      HtmlBody: htmlBody,
-      TextBody: textBody,
       MessageStream: getMessageStream(),
     });
 
     const accepted = assertPostmarkSuccess(result, recipient);
 
-    await sendInternalCopy({
-      originalRecipient: recipient,
-      subject,
-      htmlBody,
-      textBody,
-    });
 
     return accepted;
   } catch (error) {
