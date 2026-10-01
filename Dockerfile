@@ -7,7 +7,7 @@
 
 # 1) Install ALL dependencies, including devDependencies,
 #    because TypeScript/Next.js tooling is required to build.
-FROM node:22-bookworm-slim AS deps-dev
+FROM node:22-trixie-slim AS deps-dev
 
 WORKDIR /app
 
