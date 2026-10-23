@@ -7,7 +7,7 @@
 
 # 1) Install ALL dependencies, including devDependencies,
 #    because TypeScript/Next.js tooling is required to build.
-FROM node:22-trixie-slim AS deps-dev
+FROM node:22.23.4-trixie-slim AS deps-dev
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 2) Build the Next.js application.
-FROM node:22-trixie-slim AS builder
+FROM node:22.23.4-trixie-slim AS builder
 
 WORKDIR /app
 
@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 
 # 3) Install production-only dependencies in a clean layer.
-FROM node:22-trixie-slim AS prod-deps
+FROM node:22.23.4-trixie-slim AS prod-deps
 
 WORKDIR /app
 
@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --include=optional
 
 # 4) Minimal production runtime image.
-FROM node:22-trixie-slim AS runner
+FROM node:22.23.4-trixie-slim AS runner
 
 WORKDIR /app
 
